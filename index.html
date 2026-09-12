@@ -41,13 +41,7 @@
       box-sizing: border-box;
       font-size: 1rem;
     }
-    textarea {
-      resize: vertical;
-      background-color: #f8f9fa;
-      white-space: pre;
-      overflow-x: auto;
-    }
-    input:focus, select:focus, textarea:focus {
+    input:focus, select:focus {
       outline: none;
       border-color: #007bff;
       box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
@@ -83,7 +77,23 @@
     .btn-primary { background-color: #007bff; }
     .btn-primary:disabled { background-color: #a0cbf7; cursor: not-allowed; }
     .btn-secondary { background-color: #6c757d; }
-    .btn-success { background-color: #28a745; }
+    .btn-success { background-color: #28a745; transition: 0.2s; }
+    
+    .copy-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+    .copy-row input {
+      flex: 1;
+      background-color: #f8f9fa;
+      color: #495057;
+    }
+    .copy-row button {
+      flex: 0 0 90px;
+      padding: 10px 5px;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -157,16 +167,29 @@
       </div>
     </div>
 
-    <!-- Step 6: コピー画面 -->
+    <!-- Step 6: コピー画面（2段階） -->
     <div id="step6" class="step">
+      
       <div class="form-group">
-        <label for="resultData">スプレッドシート用データ</label>
-        <textarea id="resultData" rows="4" readonly></textarea>
-        <div class="hint-text">※スプレッドシートの <b>M列</b> のセルを選択して貼り付けてください。</div>
+        <label>① M列用 (商品名〜ブランド)</label>
+        <div class="copy-row">
+          <input type="text" id="resultData1" readonly>
+          <button id="copyBtn1" class="btn-success">コピー</button>
+        </div>
+        <div class="hint-text">※スプレッドシートの <b>M列</b> のセルに貼り付けてください。</div>
       </div>
-      <div class="btn-group">
+
+      <div class="form-group" style="margin-top: 25px;">
+        <label>② U列用 (サイズ〜担当者)</label>
+        <div class="copy-row">
+          <input type="text" id="resultData2" readonly>
+          <button id="copyBtn2" class="btn-success">コピー</button>
+        </div>
+        <div class="hint-text">※スプレッドシートの <b>U列</b> のセルに貼り付けてください。</div>
+      </div>
+
+      <div class="btn-group" style="margin-top: 30px;">
         <button id="back5" class="btn-secondary">戻る</button>
-        <button id="copyBtn" class="btn-success">コピーする</button>
       </div>
     </div>
 
@@ -210,24 +233,22 @@
     const step5 = document.getElementById('step5');
     const step6 = document.getElementById('step6');
 
-    // --- Step 1 制御 ---
+    // --- Step 1 ---
     document.getElementById('next1').addEventListener('click', () => {
       step1.classList.remove('active');
       step2.classList.add('active');
     });
 
-    // --- Step 2 制御 (IDのみ) ---
+    // --- Step 2 (ID) ---
     const transactionId = document.getElementById('transactionId');
     const next2Btn = document.getElementById('next2');
     
     const validateStep2 = () => {
       const idPattern = /^\d{1,2}-\d+-\d{1,2}$/;
       const isIdValid = idPattern.test(transactionId.value.trim());
-      
       document.getElementById('idError').style.display = (transactionId.value !== "" && !isIdValid) ? 'block' : 'none';
       next2Btn.disabled = !isIdValid;
     };
-    
     transactionId.addEventListener('input', validateStep2);
 
     document.getElementById('back1').addEventListener('click', () => {
@@ -239,7 +260,7 @@
       step3.classList.add('active');
     });
 
-    // --- Step 3 制御 (ブランド) ---
+    // --- Step 3 (ブランド) ---
     const brandInput = document.getElementById('brand');
     const next3Btn = document.getElementById('next3');
     brandInput.addEventListener('input', () => {
@@ -264,7 +285,7 @@
       validateStep4();
     });
 
-    // --- Step 4 制御 (商品名) ---
+    // --- Step 4 (商品名 + 翻訳 + カラー囲み) ---
     const itemNameInput = document.getElementById('itemName');
     const next4Btn = document.getElementById('next4');
     const translateMsg = document.getElementById('translateMsg');
@@ -281,10 +302,7 @@
     const formatColor = (text) => {
       if (!text) return text;
       const trimmed = text.trim();
-      
-      if (trimmed.endsWith('"') || trimmed.endsWith('”') || trimmed.endsWith("'")) {
-        return text; 
-      }
+      if (trimmed.endsWith('"') || trimmed.endsWith('”') || trimmed.endsWith("'")) return text; 
 
       const words = trimmed.split(' ');
       if (words.length < 1) return text;
@@ -302,17 +320,14 @@
           const color1 = capitalize(cleanSecondLast);
           const color2 = capitalize(cleanLast);
           words.splice(words.length - 2, 2, `"${color1} × ${color2}"`);
-          const trailingSpace = text.endsWith(' ') ? ' ' : '';
-          return words.join(' ') + trailingSpace;
+          return words.join(' ') + (text.endsWith(' ') ? ' ' : '');
         }
       }
       
       if (isLastColor) {
         words[words.length - 1] = `"${lastWord}"`;
-        const trailingSpace = text.endsWith(' ') ? ' ' : '';
-        return words.join(' ') + trailingSpace;
+        return words.join(' ') + (text.endsWith(' ') ? ' ' : '');
       }
-      
       return text;
     };
     
@@ -324,7 +339,6 @@
 
     itemNameInput.addEventListener('input', () => {
       validateStep4();
-      
       clearTimeout(typingTimer);
       typingTimer = setTimeout(async () => {
         const text = itemNameInput.value;
@@ -339,15 +353,12 @@
           try {
             const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=ja|en`);
             const data = await res.json();
-            
             if (data.responseData && data.responseData.translatedText) {
               itemNameInput.value = formatColor(data.responseData.translatedText);
             }
-            
             translateMsg.style.color = '#28a745';
             translateMsg.textContent = '✓ 翻訳完了';
             setTimeout(() => { translateMsg.style.display = 'none'; }, 2000);
-            
           } catch (error) {
             translateMsg.style.color = '#dc3545';
             translateMsg.textContent = '翻訳エラー（手動で修正してください）';
@@ -358,7 +369,6 @@
             itemNameInput.value = formattedText;
           }
         }
-        
         validateStep4();
       }, 800);
     });
@@ -373,7 +383,7 @@
       step5.classList.add('active');
     });
 
-    // --- Step 5 制御 (サイズ入力) ---
+    // --- Step 5 (サイズ入力) ---
     const itemSizeInput = document.getElementById('itemSize');
     const next5Btn = document.getElementById('next5');
 
@@ -386,7 +396,7 @@
       step4.classList.add('active');
     });
 
-    // --- Step 5 -> 6 (データ成形とコピー画面への遷移) ---
+    // --- Step 5 -> 6 (データ成形と遷移) ---
     next5Btn.addEventListener('click', () => {
       step5.classList.remove('active');
       step6.classList.add('active');
@@ -396,50 +406,40 @@
       const itemSize = document.getElementById('itemSize').value;
       const staff = document.getElementById('staff').value;
 
-      // M列からペーストした際に、N, O, P などの不要な列を空白のタブで飛ばして配置する
-      // インデックス 0=M, 1=N, 2=O, 3=P, 4=Q, 5=R, 6=S, 7=T, 8=U, 9=V, 10=W, 11=X, 12=Y
-      const dataToCopy = [
-        itemName, // M列
-        "",       // N列
-        "",       // O列
-        "",       // P列
-        brand,    // Q列
-        "",       // R列
-        "",       // S列
-        "",       // T列
-        itemSize, // U列
-        "",       // V列
-        "",       // W列
-        "",       // X列
-        staff     // Y列
-      ];
-      
-      // 配列をタブで結合して出力
-      document.getElementById('resultData').value = dataToCopy.join('\t');
+      // ① M列〜Q列用データ (M:商品名, N:空, O:空, P:空, Q:ブランド)
+      const data1 = [itemName, "", "", "", brand];
+      document.getElementById('resultData1').value = data1.join('\t');
+
+      // ② U列〜Y列用データ (U:サイズ, V:空, W:空, X:空, Y:担当者)
+      const data2 = [itemSize, "", "", "", staff];
+      document.getElementById('resultData2').value = data2.join('\t');
     });
 
-    // --- Step 6 制御 (コピー処理) ---
+    // --- Step 6 (コピー処理) ---
     document.getElementById('back5').addEventListener('click', () => {
       step6.classList.remove('active');
       step5.classList.add('active');
     });
 
-    const copyBtn = document.getElementById('copyBtn');
-    copyBtn.addEventListener('click', () => {
-      const textToCopy = document.getElementById('resultData').value;
-      
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        copyBtn.textContent = '✓ コピーしました！';
-        copyBtn.style.backgroundColor = '#1e7e34';
-        
-        setTimeout(() => {
-          copyBtn.textContent = 'コピーする';
-          copyBtn.style.backgroundColor = '#28a745';
-        }, 2000);
-      }).catch(err => {
-        alert('コピーに失敗しました。テキストエリアの文字を手動でコピーしてください。');
+    const setupCopyBtn = (btnId, inputId) => {
+      const btn = document.getElementById(btnId);
+      btn.addEventListener('click', () => {
+        const textToCopy = document.getElementById(inputId).value;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          btn.textContent = '✓ コピー済';
+          btn.style.backgroundColor = '#1e7e34';
+          setTimeout(() => {
+            btn.textContent = 'コピー';
+            btn.style.backgroundColor = '#28a745';
+          }, 2000);
+        }).catch(() => {
+          alert('コピーに失敗しました。');
+        });
       });
-    });
+    };
+
+    setupCopyBtn('copyBtn1', 'resultData1');
+    setupCopyBtn('copyBtn2', 'resultData2');
   </script>
 
 </body>
