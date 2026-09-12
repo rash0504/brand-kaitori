@@ -79,6 +79,10 @@
     .btn-secondary { background-color: #6c757d; }
     .btn-success { background-color: #28a745; transition: 0.2s; }
     
+    /* Google検索ボタン用 */
+    .btn-google { background-color: #4285F4; margin-top: 5px; }
+    .btn-google:disabled { background-color: #a0c1f9; cursor: not-allowed; }
+    
     .copy-row {
       display: flex;
       gap: 10px;
@@ -127,8 +131,22 @@
       </div>
     </div>
 
-    <!-- Step 3: ブランド選択 -->
+    <!-- Step 3: 型番入力（新規追加・任意） -->
     <div id="step3" class="step">
+      <div class="form-group">
+        <label for="modelNumber">型番 (任意)</label>
+        <input type="text" id="modelNumber" placeholder="例: NP11834">
+        <button id="googleSearchBtn" class="btn-google" disabled>Googleで検索する</button>
+        <div class="hint-text">※型番を入力して検索ボタンを押すと、別タブでGoogle検索が開きます。入力しなくても「次へ」進めます。</div>
+      </div>
+      <div class="btn-group">
+        <button id="back2" class="btn-secondary">戻る</button>
+        <button id="next3" class="btn-primary">次へ</button>
+      </div>
+    </div>
+
+    <!-- Step 4: ブランド選択 -->
+    <div id="step4" class="step">
       <div class="form-group">
         <label for="brand">ブランド</label>
         <input type="text" id="brand" list="brandList" placeholder="文字を入力して絞り込み">
@@ -136,13 +154,13 @@
         <div class="hint-text">※リストにないブランドも手入力可能です</div>
       </div>
       <div class="btn-group">
-        <button id="back2" class="btn-secondary">戻る</button>
-        <button id="next3" class="btn-primary" disabled>次へ</button>
+        <button id="back3" class="btn-secondary">戻る</button>
+        <button id="next4" class="btn-primary" disabled>次へ</button>
       </div>
     </div>
 
-    <!-- Step 4: 商品名入力 -->
-    <div id="step4" class="step">
+    <!-- Step 5: 商品名入力 -->
+    <div id="step5" class="step">
       <div class="form-group">
         <label for="itemName">商品名</label>
         <input type="text" id="itemName" placeholder="例: Supreme x The Exorcist Flannel Shirt &quot;Black × Blue&quot;">
@@ -150,25 +168,25 @@
         <div class="hint-text">※必ず ブランド名 商品名 "カラー" の順にしてください</div>
       </div>
       <div class="btn-group">
-        <button id="back3" class="btn-secondary">戻る</button>
-        <button id="next4" class="btn-primary" disabled>次へ</button>
+        <button id="back4" class="btn-secondary">戻る</button>
+        <button id="next5" class="btn-primary" disabled>次へ</button>
       </div>
     </div>
 
-    <!-- Step 5: サイズ入力 -->
-    <div id="step5" class="step">
+    <!-- Step 6: サイズ入力 -->
+    <div id="step6" class="step">
       <div class="form-group">
         <label for="itemSize">サイズ</label>
         <input type="text" id="itemSize" placeholder="例: M, L, 42, US8">
       </div>
       <div class="btn-group">
-        <button id="back4" class="btn-secondary">戻る</button>
-        <button id="next5" class="btn-primary" disabled>完了してコピー</button>
+        <button id="back5" class="btn-secondary">戻る</button>
+        <button id="next6" class="btn-primary" disabled>完了してコピー</button>
       </div>
     </div>
 
-    <!-- Step 6: コピー画面（2段階） -->
-    <div id="step6" class="step">
+    <!-- Step 7: コピー画面 -->
+    <div id="step7" class="step">
       
       <div class="form-group">
         <label>① M列用 (商品名〜ブランド)</label>
@@ -176,7 +194,7 @@
           <input type="text" id="resultData1" readonly>
           <button id="copyBtn1" class="btn-success">コピー</button>
         </div>
-        <div class="hint-text">※スプレッドシートの <b>M列</b> のセルに貼り付けてください。</div>
+        <div class="hint-text">※スプレッドシートの <b>M列</b> のセルに貼り付けてください。<br>（M列:商品名, Q列:ブランド に自動で入ります）</div>
       </div>
 
       <div class="form-group" style="margin-top: 25px;">
@@ -185,11 +203,11 @@
           <input type="text" id="resultData2" readonly>
           <button id="copyBtn2" class="btn-success">コピー</button>
         </div>
-        <div class="hint-text">※スプレッドシートの <b>U列</b> のセルに貼り付けてください。</div>
+        <div class="hint-text">※スプレッドシートの <b>U列</b> のセルに貼り付けてください。<br>（U列:サイズ, Y列:担当者 に自動で入ります）</div>
       </div>
 
       <div class="btn-group" style="margin-top: 30px;">
-        <button id="back5" class="btn-secondary">戻る</button>
+        <button id="back6" class="btn-secondary">戻る</button>
       </div>
     </div>
 
@@ -232,6 +250,7 @@
     const step4 = document.getElementById('step4');
     const step5 = document.getElementById('step5');
     const step6 = document.getElementById('step6');
+    const step7 = document.getElementById('step7');
 
     // --- Step 1 ---
     document.getElementById('next1').addEventListener('click', () => {
@@ -260,20 +279,46 @@
       step3.classList.add('active');
     });
 
-    // --- Step 3 (ブランド) ---
-    const brandInput = document.getElementById('brand');
-    const next3Btn = document.getElementById('next3');
-    brandInput.addEventListener('input', () => {
-      next3Btn.disabled = brandInput.value.trim() === "";
+    // --- Step 3 (型番入力・検索) ---
+    const modelNumberInput = document.getElementById('modelNumber');
+    const googleSearchBtn = document.getElementById('googleSearchBtn');
+    
+    modelNumberInput.addEventListener('input', () => {
+      // 型番が入力されたら検索ボタンを有効化（次へボタンは常に有効）
+      googleSearchBtn.disabled = modelNumberInput.value.trim() === "";
+    });
+
+    googleSearchBtn.addEventListener('click', () => {
+      const query = modelNumberInput.value.trim();
+      if (query !== "") {
+        // 別タブでGoogle検索を開く
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+      }
     });
 
     document.getElementById('back2').addEventListener('click', () => {
       step3.classList.remove('active');
       step2.classList.add('active');
     });
-    next3Btn.addEventListener('click', () => {
+    document.getElementById('next3').addEventListener('click', () => {
       step3.classList.remove('active');
       step4.classList.add('active');
+    });
+
+    // --- Step 4 (ブランド) ---
+    const brandInput = document.getElementById('brand');
+    const next4Btn = document.getElementById('next4');
+    brandInput.addEventListener('input', () => {
+      next4Btn.disabled = brandInput.value.trim() === "";
+    });
+
+    document.getElementById('back3').addEventListener('click', () => {
+      step4.classList.remove('active');
+      step3.classList.add('active');
+    });
+    next4Btn.addEventListener('click', () => {
+      step4.classList.remove('active');
+      step5.classList.add('active');
       
       const selectedBrand = brandInput.value.trim();
       const itemNameInput = document.getElementById('itemName');
@@ -282,12 +327,12 @@
         itemNameInput.value = selectedBrand + " ";
       }
       itemNameInput.placeholder = `例: ${selectedBrand} x The Exorcist Flannel Shirt "Black × Blue"`;
-      validateStep4();
+      validateStep5();
     });
 
-    // --- Step 4 (商品名 + 翻訳 + カラー囲み) ---
+    // --- Step 5 (商品名 + 翻訳 + カラー囲み) ---
     const itemNameInput = document.getElementById('itemName');
-    const next4Btn = document.getElementById('next4');
+    const next5Btn = document.getElementById('next5');
     const translateMsg = document.getElementById('translateMsg');
     let typingTimer;
 
@@ -331,14 +376,14 @@
       return text;
     };
     
-    const validateStep4 = () => {
+    const validateStep5 = () => {
       const selectedBrand = brandInput.value.trim();
       const currentItemName = itemNameInput.value.trim();
-      next4Btn.disabled = (currentItemName === "" || currentItemName === selectedBrand);
+      next5Btn.disabled = (currentItemName === "" || currentItemName === selectedBrand);
     };
 
     itemNameInput.addEventListener('input', () => {
-      validateStep4();
+      validateStep5();
       clearTimeout(typingTimer);
       typingTimer = setTimeout(async () => {
         const text = itemNameInput.value;
@@ -348,7 +393,7 @@
           translateMsg.style.display = 'block';
           translateMsg.style.color = '#007bff';
           translateMsg.textContent = '英語へ自動翻訳中...';
-          next4Btn.disabled = true;
+          next5Btn.disabled = true;
           
           try {
             const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=ja|en`);
@@ -369,26 +414,8 @@
             itemNameInput.value = formattedText;
           }
         }
-        validateStep4();
+        validateStep5();
       }, 800);
-    });
-
-    document.getElementById('back3').addEventListener('click', () => {
-      step4.classList.remove('active');
-      step3.classList.add('active');
-    });
-
-    next4Btn.addEventListener('click', () => {
-      step4.classList.remove('active');
-      step5.classList.add('active');
-    });
-
-    // --- Step 5 (サイズ入力) ---
-    const itemSizeInput = document.getElementById('itemSize');
-    const next5Btn = document.getElementById('next5');
-
-    itemSizeInput.addEventListener('input', () => {
-      next5Btn.disabled = itemSizeInput.value.trim() === "";
     });
 
     document.getElementById('back4').addEventListener('click', () => {
@@ -396,10 +423,28 @@
       step4.classList.add('active');
     });
 
-    // --- Step 5 -> 6 (データ成形と遷移) ---
     next5Btn.addEventListener('click', () => {
       step5.classList.remove('active');
       step6.classList.add('active');
+    });
+
+    // --- Step 6 (サイズ入力) ---
+    const itemSizeInput = document.getElementById('itemSize');
+    const next6Btn = document.getElementById('next6');
+
+    itemSizeInput.addEventListener('input', () => {
+      next6Btn.disabled = itemSizeInput.value.trim() === "";
+    });
+
+    document.getElementById('back5').addEventListener('click', () => {
+      step6.classList.remove('active');
+      step5.classList.add('active');
+    });
+
+    // --- Step 6 -> 7 (データ成形と遷移) ---
+    next6Btn.addEventListener('click', () => {
+      step6.classList.remove('active');
+      step7.classList.add('active');
       
       const itemName = document.getElementById('itemName').value;
       const brand = document.getElementById('brand').value;
@@ -415,10 +460,10 @@
       document.getElementById('resultData2').value = data2.join('\t');
     });
 
-    // --- Step 6 (コピー処理) ---
-    document.getElementById('back5').addEventListener('click', () => {
-      step6.classList.remove('active');
-      step5.classList.add('active');
+    // --- Step 7 (コピー処理) ---
+    document.getElementById('back6').addEventListener('click', () => {
+      step7.classList.remove('active');
+      step6.classList.add('active');
     });
 
     const setupCopyBtn = (btnId, inputId) => {
