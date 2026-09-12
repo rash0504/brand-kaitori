@@ -70,6 +70,19 @@
       font-size: 0.8rem;
       margin-top: 5px;
     }
+    .link-preview {
+      margin-top: 10px;
+      padding: 8px;
+      background: #eef5ff;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      word-break: break-all;
+      display: none;
+    }
+    .link-preview a {
+      color: #007bff;
+      text-decoration: underline;
+    }
     .btn-group { display: flex; gap: 10px; margin-top: 20px; }
     button {
       flex: 1;
@@ -168,6 +181,10 @@
         <input type="text" id="itemName" placeholder="例: Supreme x The Exorcist Flannel Shirt &quot;Black × Blue&quot;">
         <div id="translateMsg" class="success-text"></div>
         <div class="hint-text">※必ず ブランド名 商品名 "カラー" の順にしてください</div>
+        <div id="itemPageLinkPreview" class="link-preview">
+          🔗 <b>設定中の商品ページ:</b><br>
+          <a id="itemPageLink" href="#" target="_blank"></a>
+        </div>
       </div>
       <div class="btn-group">
         <button id="back4" class="btn-secondary">戻る</button>
@@ -233,7 +250,7 @@
         </div>
         <div class="hint-text" style="margin-top: 5px;">
           スプレッドシートの <b>K列</b> のセルを選択して貼り付けてください。<br>
-          （K:検品Wチェック済, M:商品名, N:ID, O:型番, Q:ブランド, R:商品ページ, <b>S:管理画面URL</b>, U:サイズ, V:状態, W:付属品, Y:担当者）
+          （K:検品Wチェック済, M:商品名, N:ID, O:型番, Q:ブランド, R:商品ページ, S:管理画面URL, U:サイズ, V:状態, W:付属品, Y:担当者）
         </div>
       </div>
 
@@ -282,6 +299,18 @@
     const switchStep = (from, to) => {
       document.getElementById(from).classList.remove('active');
       document.getElementById(to).classList.add('active');
+    };
+
+    // 商品ページURLを判定・生成する関数 (R列用)
+    const getResolvedItemPage = () => {
+      const itemIdValue = document.getElementById('itemId').value.trim();
+      const itemPageValue = document.getElementById('itemPage').value.trim();
+      
+      if (itemIdValue !== "") {
+        return `https://snkrdunk.com/apparels/${itemIdValue}`;
+      } else {
+        return itemPageValue;
+      }
     };
 
     // --- Step 1 (担当者) ---
@@ -355,6 +384,20 @@
 
       previousBrand = currentBrand;
       itemNameField.placeholder = `例: ${currentBrand} x The Exorcist Flannel Shirt "Black"`;
+      
+      // 商品ページプレビューリンクの設定
+      const resolvedUrl = getResolvedItemPage();
+      const previewContainer = document.getElementById('itemPageLinkPreview');
+      const previewLink = document.getElementById('itemPageLink');
+      
+      if (resolvedUrl !== "") {
+        previewLink.href = resolvedUrl;
+        previewLink.textContent = resolvedUrl;
+        previewContainer.style.display = 'block';
+      } else {
+        previewContainer.style.display = 'none';
+      }
+
       validateStep5();
       switchStep('step4', 'step5');
     });
@@ -454,8 +497,10 @@
       const itemSize = document.getElementById('itemSize').value;
       const itemCondition = document.getElementById('itemCondition').value;
       const itemAccessories = document.getElementById('itemAccessories').value;
-      const itemPage = document.getElementById('itemPage').value;
       const staff = document.getElementById('staff').value;
+
+      // ID有無に基づく商品ページURL(R列)の生成
+      const resolvedItemPage = getResolvedItemPage();
 
       // S列の管理画面URLを自動生成（IDが入力されている場合のみ）
       let adminUrl = "";
@@ -466,7 +511,7 @@
       // K列〜Y列までを一気にまとめる配列
       // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:空, Q:ブランド, R:商品ページ, S:管理画面URL, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
       const data = [
-        "検品Wチェック済", "", itemName, itemId, modelNumber, "", brand, itemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, "", staff
+        "検品Wチェック済", "", itemName, itemId, modelNumber, "", brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, "", staff
       ];
       
       document.getElementById('resultData').value = data.join('\t');
@@ -488,6 +533,7 @@
       itemConditionSelect.value = "";
       itemAccessoriesInput.value = "";
       previousBrand = "";
+      document.getElementById('itemPageLinkPreview').style.display = 'none';
       
       // ボタンとエラー表示の初期化
       googleSearchBtn.disabled = true;
