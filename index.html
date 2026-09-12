@@ -200,70 +200,71 @@
       </div>
     </div>
 
-    <!-- Step Category: カテゴリ選択（自動選択機能付き） -->
+    <!-- Step Category: カテゴリ選択・手入力 -->
     <div id="stepCategory" class="step">
       <div class="form-group">
         <label for="itemCategory">カテゴリ</label>
-        <select id="itemCategory">
-          <option value="">選択してください</option>
-          <option value="その他">その他</option>
-          <option value="ウォレットチェーン">ウォレットチェーン</option>
-          <option value="カーゴパンツ">カーゴパンツ</option>
-          <option value="キーホルダー・キーチェーン">キーホルダー・キーチェーン</option>
-          <option value="コイン&カードケース">コイン&カードケース</option>
-          <option value="コート">コート</option>
-          <option value="サンダル">サンダル</option>
-          <option value="シューズ">シューズ</option>
-          <option value="ショルダー・メッセンジャー">ショルダー・メッセンジャー</option>
-          <option value="ショートパンツ">ショートパンツ</option>
-          <option value="ジャケット">ジャケット</option>
-          <option value="スウェットパンツ">スウェットパンツ</option>
-          <option value="スウェット・トレーナー">スウェット・トレーナー</option>
-          <option value="スカート">スカート</option>
-          <option value="スラックス">スラックス</option>
-          <option value="セットアップ">セットアップ</option>
-          <option value="ソックス">ソックス</option>
-          <option value="タンクトップ&ノースリーブ">タンクトップ&ノースリーブ</option>
-          <option value="ダウンジャケット">ダウンジャケット</option>
-          <option value="チノパンツ・ワークパンツ">チノパンツ・ワークパンツ</option>
-          <option value="デニム・ジーンズ">デニム・ジーンズ</option>
-          <option value="トラックパンツ">トラックパンツ</option>
-          <option value="トートバッグ">トートバッグ</option>
-          <option value="ニット・セーター">ニット・セーター</option>
-          <option value="ネックレス">ネックレス</option>
-          <option value="バックパック">バックパック</option>
-          <option value="バッグ">バッグ</option>
-          <option value="バングル・ブレスレット">バングル・ブレスレット</option>
-          <option value="パーカー">パーカー</option>
-          <option value="ビーニー・ニットキャップ">ビーニー・ニットキャップ</option>
-          <option value="ピアス・イヤリング">ピアス・イヤリング</option>
-          <option value="フリースジャケット">フリースジャケット</option>
-          <option value="ブルゾンジャケット">ブルゾンジャケット</option>
-          <option value="ブーツ">ブーツ</option>
-          <option value="ベスト">ベスト</option>
-          <option value="ベルト・バックル">ベルト・バックル</option>
-          <option value="ペンダント・チャーム">ペンダント・チャーム</option>
-          <option value="ボトムス">ボトムス</option>
-          <option value="ポーチ">ポーチ</option>
-          <option value="マウンテンジャケット">マウンテンジャケット</option>
-          <option value="マフラー・スカーフ">マフラー・スカーフ</option>
-          <option value="リング・指輪">リング・指輪</option>
-          <option value="レザーシューズ">レザーシューズ</option>
-          <option value="ローファー">ローファー</option>
-          <option value="半袖Tシャツ">半袖Tシャツ</option>
-          <option value="半袖シャツ">半袖シャツ</option>
-          <option value="帽子">帽子</option>
-          <option value="手袋">手袋</option>
-          <option value="折り財布">折り財布</option>
-          <option value="時計">時計</option>
-          <option value="眼鏡・サングラス">眼鏡・サングラス</option>
-          <option value="財布">財布</option>
-          <option value="財布・小物">財布・小物</option>
-          <option value="長袖Tシャツ">長袖Tシャツ</option>
-          <option value="長袖シャツ">長袖シャツ</option>
-          <option value="長財布">長財布</option>
-        </select>
+        <input type="text" id="itemCategory" list="categoryList" placeholder="文字を入力して絞り込み、または手入力">
+        <datalist id="categoryList">
+          <option value="その他"></option>
+          <option value="ウォレットチェーン"></option>
+          <option value="カーゴパンツ"></option>
+          <option value="キーホルダー・キーチェーン"></option>
+          <option value="コイン&カードケース"></option>
+          <option value="コート"></option>
+          <option value="サンダル"></option>
+          <option value="シューズ"></option>
+          <option value="ショルダー・メッセンジャー"></option>
+          <option value="ショートパンツ"></option>
+          <option value="ジャケット"></option>
+          <option value="スウェットパンツ"></option>
+          <option value="スウェット・トレーナー"></option>
+          <option value="スカート"></option>
+          <option value="スラックス"></option>
+          <option value="セットアップ"></option>
+          <option value="ソックス"></option>
+          <option value="タンクトップ&ノースリーブ"></option>
+          <option value="ダウンジャケット"></option>
+          <option value="チノパンツ・ワークパンツ"></option>
+          <option value="デニム・ジーンズ"></option>
+          <option value="トラックパンツ"></option>
+          <option value="トートバッグ"></option>
+          <option value="ニット・セーター"></option>
+          <option value="ネックレス"></option>
+          <option value="バックパック"></option>
+          <option value="バッグ"></option>
+          <option value="バングル・ブレスレット"></option>
+          <option value="パーカー"></option>
+          <option value="ビーニー・ニットキャップ"></option>
+          <option value="ピアス・イヤリング"></option>
+          <option value="フリースジャケット"></option>
+          <option value="ブルゾンジャケット"></option>
+          <option value="ブーツ"></option>
+          <option value="ベスト"></option>
+          <option value="ベルト・バックル"></option>
+          <option value="ペンダント・チャーム"></option>
+          <option value="ボトムス"></option>
+          <option value="ポーチ"></option>
+          <option value="マウンテンジャケット"></option>
+          <option value="マフラー・スカーフ"></option>
+          <option value="リング・指輪"></option>
+          <option value="レザーシューズ"></option>
+          <option value="ローファー"></option>
+          <option value="半袖Tシャツ"></option>
+          <option value="半袖シャツ"></option>
+          <option value="帽子"></option>
+          <option value="手袋"></option>
+          <option value="折り財布"></option>
+          <option value="時計"></option>
+          <option value="眼鏡・サングラス"></option>
+          <option value="財布"></option>
+          <option value="財布・小物"></option>
+          <option value="長袖Tシャツ"></option>
+          <option value="長袖シャツ"></option>
+          <option value="長財布"></option>
+        </datalist>
         <div id="categoryAutoMsg" class="success-text">✓ 商品名からカテゴリを自動推測しました</div>
+        <div class="hint-text">※リストにないカテゴリも自由に手入力可能です</div>
       </div>
       <div class="btn-group">
         <button id="backCategory" class="btn-secondary">戻る</button>
@@ -611,28 +612,28 @@
     
     next5Btn.addEventListener('click', () => {
       const predicted = predictCategory(itemNameInput.value);
-      const categorySelect = document.getElementById('itemCategory');
+      const categoryInput = document.getElementById('itemCategory');
       const autoMsg = document.getElementById('categoryAutoMsg');
       const nextCatBtn = document.getElementById('nextCategory');
 
       if (predicted !== "") {
-        categorySelect.value = predicted;
+        categoryInput.value = predicted;
         autoMsg.style.display = 'block';
         nextCatBtn.disabled = false;
       } else {
         autoMsg.style.display = 'none';
-        nextCatBtn.disabled = (categorySelect.value === "");
+        nextCatBtn.disabled = (categoryInput.value.trim() === "");
       }
 
       switchStep('step5', 'stepCategory');
     });
 
     // --- Step Category (カテゴリ) ---
-    const itemCategorySelect = document.getElementById('itemCategory');
+    const itemCategoryInput = document.getElementById('itemCategory');
     const nextCategoryBtn = document.getElementById('nextCategory');
 
-    itemCategorySelect.addEventListener('change', () => {
-      nextCategoryBtn.disabled = itemCategorySelect.value === "";
+    itemCategoryInput.addEventListener('input', () => {
+      nextCategoryBtn.disabled = itemCategoryInput.value.trim() === "";
       document.getElementById('categoryAutoMsg').style.display = 'none';
     });
     document.getElementById('backCategory').addEventListener('click', () => switchStep('stepCategory', 'step5'));
@@ -673,13 +674,12 @@
       const itemId = document.getElementById('itemId').value.trim();
       const modelNumber = document.getElementById('modelNumber').value;
       const brand = document.getElementById('brand').value;
-      const itemCategory = document.getElementById('itemCategory').value;
+      const itemCategory = document.getElementById('itemCategory').value.trim();
       const itemSize = document.getElementById('itemSize').value;
       const itemCondition = document.getElementById('itemCondition').value;
       const itemAccessories = document.getElementById('itemAccessories').value;
       const selectedStaff = document.getElementById('staff').value;
 
-      // 「情報入力者」が選ばれた場合はY列（担当者）を空文字にする
       const staffVal = (selectedStaff === "情報入力者") ? "" : selectedStaff;
 
       const resolvedItemPage = getResolvedItemPage();
@@ -710,7 +710,7 @@
       document.getElementById('itemPage').value = "";
       brandInput.value = "";
       itemNameInput.value = "";
-      itemCategorySelect.value = "";
+      itemCategoryInput.value = "";
       itemSizeInput.value = "";
       itemConditionSelect.value = "";
       itemAccessoriesInput.value = "";
