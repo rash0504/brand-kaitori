@@ -114,7 +114,7 @@
         <label for="modelNumber">型番 (任意)</label>
         <input type="text" id="modelNumber" placeholder="例: NP11834">
         <button id="googleSearchBtn" class="btn-google" disabled>Googleで検索する</button>
-        <div class="hint-text">※入力しなくても「次へ」進めます。小文字で入力しても自動で大文字になります。</div>
+        <div class="hint-text">※入力しなくても「次へ」進めます。小文字で入力しても自動で大文字になります。<br><b>【操作】次へ進むには Enter を素早く2回押すかボタンをクリック</b></div>
       </div>
       <div class="btn-group">
         <button id="back1" class="btn-secondary">戻る</button>
@@ -300,15 +300,35 @@
     // --- Step 4 (ブランド) ---
     const brandInput = document.getElementById('brand');
     const next4Btn = document.getElementById('next4');
+    let previousBrand = ""; // 前回確定したブランド名を記憶する用
+
     brandInput.addEventListener('input', () => {
       next4Btn.disabled = brandInput.value.trim() === "";
     });
     document.getElementById('back3').addEventListener('click', () => switchStep('step4', 'step3'));
+    
     next4Btn.addEventListener('click', () => {
-      if (document.getElementById('itemName').value === "") {
-        document.getElementById('itemName').value = brandInput.value.trim() + " ";
+      const currentBrand = brandInput.value.trim();
+      const itemNameField = document.getElementById('itemName');
+      const currentValue = itemNameField.value;
+
+      // 初回入力時、または商品名が前回のブランド名だけのままの場合
+      if (currentValue === "" || currentValue === previousBrand + " ") {
+        itemNameField.value = currentBrand + " ";
+      } 
+      // 戻ってブランド名を修正した場合（商品名に既に続きが入力されている場合）
+      else if (previousBrand !== "" && currentValue.startsWith(previousBrand + " ")) {
+        itemNameField.value = currentValue.replace(previousBrand + " ", currentBrand + " ");
+      } 
+      // 万が一、手動でブランド名を消していた場合などの補正
+      else if (currentValue !== "" && previousBrand === "") {
+        if (!currentValue.startsWith(currentBrand)) {
+          itemNameField.value = currentBrand + " " + currentValue;
+        }
       }
-      document.getElementById('itemName').placeholder = `例: ${brandInput.value.trim()} x The Exorcist Flannel Shirt "Black"`;
+
+      previousBrand = currentBrand; // 今回確定したブランドを記憶
+      itemNameField.placeholder = `例: ${currentBrand} x The Exorcist Flannel Shirt "Black"`;
       validateStep5();
       switchStep('step4', 'step5');
     });
@@ -433,6 +453,7 @@
       itemSizeInput.value = "";
       itemConditionSelect.value = "";
       itemAccessoriesInput.value = "";
+      previousBrand = ""; // 記憶したブランドもクリア
       
       // ボタンとエラー表示の初期化
       googleSearchBtn.disabled = true;
@@ -455,15 +476,27 @@
       }).catch(() => alert('コピーに失敗しました。'));
     });
 
-    // --- Enterキーで「次へ」進む処理 ---
+    // --- 【追加】Enterキー ダブルタップで「次へ」進む処理 ---
+    let lastEnterTime = 0;
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        // 日本語入力中（変換中）のEnterは無視する
+        if (e.isComposing) return;
+
         const activeStep = document.querySelector('.step.active');
         if (activeStep) {
           const primaryBtn = activeStep.querySelector('.btn-primary');
+          // ボタンが存在し、押せる状態なら
           if (primaryBtn && !primaryBtn.disabled) {
-            e.preventDefault();
-            primaryBtn.click();
+            const currentTime = new Date().getTime();
+            // 800ミリ秒以内に2回連続でEnterが押されたらクリック
+            if (currentTime - lastEnterTime < 800) {
+              e.preventDefault();
+              primaryBtn.click();
+              lastEnterTime = 0; // リセット
+            } else {
+              lastEnterTime = currentTime;
+            }
           }
         }
       }
