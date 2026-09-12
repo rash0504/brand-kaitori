@@ -311,11 +311,24 @@
       <div class="form-group">
         <label for="itemAccessories">付属品 (任意)</label>
         <input type="text" id="itemAccessories" placeholder="例: 箱、タグ、保存袋">
-        <div class="hint-text">※入力しなくても「完了」へ進めます。</div>
+        <div class="hint-text">※入力しなくても「次へ」進めます。</div>
       </div>
       <div class="btn-group">
         <button id="back7" class="btn-secondary">戻る</button>
-        <button id="next8" class="btn-primary">完了してコピー</button>
+        <button id="next8" class="btn-primary">次へ</button>
+      </div>
+    </div>
+
+    <!-- Step Note: 補足入力（任意・新規追加） -->
+    <div id="stepNote" class="step">
+      <div class="form-group">
+        <label for="itemNote">補足 (任意)</label>
+        <input type="text" id="itemNote" placeholder="例: 特記事項やメモなど">
+        <div class="hint-text">※入力しなくても「完了」へ進めます。</div>
+      </div>
+      <div class="btn-group">
+        <button id="backNote" class="btn-secondary">戻る</button>
+        <button id="nextNote" class="btn-primary">完了してコピー</button>
       </div>
     </div>
 
@@ -330,7 +343,7 @@
         </div>
         <div class="hint-text" style="margin-top: 5px;">
           スプレッドシートの <b>K列</b> のセルを選択して貼り付けてください。<br>
-          （K:検品Wチェック済, M:商品名, N:ID, O:型番, P:カテゴリ, Q:ブランド, R:商品ページ, S:管理画面URL, U:サイズ, V:状態, W:付属品, Y:担当者）
+          （K:検品Wチェック済, M:商品名, N:ID, O:型番, P:カテゴリ, Q:ブランド, R:商品ページ, S:管理画面URL, U:サイズ, V:状態, W:付属品, X:補足, Y:担当者）
         </div>
       </div>
 
@@ -665,10 +678,15 @@
     // --- Step 8 (付属品) ---
     const itemAccessoriesInput = document.getElementById('itemAccessories');
     document.getElementById('back7').addEventListener('click', () => switchStep('step8', 'step7'));
-    
-    // --- Step 8 -> 9 (データ成形と遷移) ---
-    document.getElementById('next8').addEventListener('click', () => {
-      switchStep('step8', 'step9');
+    document.getElementById('next8').addEventListener('click', () => switchStep('step8', 'stepNote'));
+
+    // --- Step Note (補足) ---
+    const itemNoteInput = document.getElementById('itemNote');
+    document.getElementById('backNote').addEventListener('click', () => switchStep('stepNote', 'step8'));
+
+    // --- Step Note -> 9 (データ成形と遷移) ---
+    document.getElementById('nextNote').addEventListener('click', () => {
+      switchStep('stepNote', 'step9');
       
       const itemName = document.getElementById('itemName').value;
       const itemId = document.getElementById('itemId').value.trim();
@@ -678,6 +696,7 @@
       const itemSize = document.getElementById('itemSize').value;
       const itemCondition = document.getElementById('itemCondition').value;
       const itemAccessories = document.getElementById('itemAccessories').value;
+      const itemNote = document.getElementById('itemNote').value;
       const selectedStaff = document.getElementById('staff').value;
 
       const staffVal = (selectedStaff === "情報入力者") ? "" : selectedStaff;
@@ -690,16 +709,16 @@
       }
 
       // K列〜Y列までを一気にまとめる配列
-      // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:カテゴリ, Q:ブランド, R:商品ページ, S:管理画面URL, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
+      // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:カテゴリ, Q:ブランド, R:商品ページ, S:管理画面URL, T:空, U:サイズ, V:状態, W:付属品, X:補足, Y:担当者
       const data = [
-        "検品Wチェック済", "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, "", staffVal
+        "検品Wチェック済", "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, itemNote, staffVal
       ];
       
       document.getElementById('resultData').value = data.join('\t');
     });
 
     // --- Step 9 (コピー処理・リセット) ---
-    document.getElementById('back8').addEventListener('click', () => switchStep('step9', 'step8'));
+    document.getElementById('back8').addEventListener('click', () => switchStep('step9', 'stepNote'));
 
     document.getElementById('resetBtn').addEventListener('click', () => {
       switchStep('step9', 'step1');
@@ -714,6 +733,7 @@
       itemSizeInput.value = "";
       itemConditionSelect.value = "";
       itemAccessoriesInput.value = "";
+      itemNoteInput.value = "";
       previousBrand = "";
       document.getElementById('itemPageLinkPreview').style.display = 'none';
       
