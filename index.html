@@ -101,22 +101,6 @@
     
     .btn-google { background-color: #4285F4; margin-top: 5px; }
     .btn-google:disabled { background-color: #a0c1f9; cursor: not-allowed; }
-
-    .copy-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 5px;
-    }
-    .copy-row input {
-      flex: 1;
-      background-color: #f8f9fa;
-      color: #495057;
-    }
-    .copy-row button {
-      flex: 0 0 90px;
-      padding: 10px 5px;
-      font-size: 0.9rem;
-    }
   </style>
 </head>
 <body>
@@ -208,7 +192,7 @@
       </div>
     </div>
 
-    <!-- Step Category: カテゴリ選択（新規追加・自動選択機能付き） -->
+    <!-- Step Category: カテゴリ選択（自動選択機能付き） -->
     <div id="stepCategory" class="step">
       <div class="form-group">
         <label for="itemCategory">カテゴリ</label>
@@ -326,32 +310,23 @@
       </div>
     </div>
 
-    <!-- Step 9: コピー画面 -->
+    <!-- Step 9: コピー画面（一括化） -->
     <div id="step9" class="step">
       
       <div class="form-group">
-        <label>① F列用 (カテゴリ)</label>
-        <div class="copy-row">
-          <input type="text" id="resultDataF" readonly>
-          <button id="copyBtnF" class="btn-success">コピー</button>
-        </div>
-        <div class="hint-text">※スプレッドシートの <b>F列</b> のセルを選択して貼り付けてください。</div>
-      </div>
-
-      <div class="form-group" style="margin-top: 25px;">
-        <label>② K列〜Y列用 (一括データ)</label>
+        <label>スプレッドシート用データ (一括)</label>
         <textarea id="resultData" rows="3" readonly></textarea>
         <div class="hint-text" style="color: #28a745; font-weight: bold; margin-top: 10px;">
           ※S列の管理画面URLはツール側で自動生成されてペーストされます。
         </div>
         <div class="hint-text" style="margin-top: 5px;">
           スプレッドシートの <b>K列</b> のセルを選択して貼り付けてください。<br>
-          （K:検品Wチェック済, M:商品名, N:ID, O:型番, Q:ブランド, R:商品ページ, S:管理画面URL, U:サイズ, V:状態, W:付属品, Y:担当者）
+          （K:検品Wチェック済, M:商品名, N:ID, O:型番, <b>P:カテゴリ</b>, Q:ブランド, R:商品ページ, S:管理画面URL, U:サイズ, V:状態, W:付属品, Y:担当者）
         </div>
       </div>
 
       <div class="btn-group" style="margin-top: 20px;">
-        <button id="copyBtn" class="btn-success">K列〜一括コピー</button>
+        <button id="copyBtn" class="btn-success">一括コピーする</button>
       </div>
       
       <div class="btn-group" style="margin-top: 15px;">
@@ -414,7 +389,6 @@
       if (!title) return "";
       const t = title.toLowerCase();
 
-      // キーワード判定テーブル (優先度の高い順)
       if (t.includes("down jacket") || t.includes("down park") || t.includes("ダウン")) return "ダウンジャケット";
       if (t.includes("fleece") || t.includes("フリース")) return "フリースジャケット";
       if (t.includes("mountain") || t.includes("マウンテン")) return "マウンテンジャケット";
@@ -627,7 +601,6 @@
 
     document.getElementById('back4').addEventListener('click', () => switchStep('step5', 'step4'));
     
-    // Step 5 -> Step Category への遷移と自動選択の実行
     next5Btn.addEventListener('click', () => {
       const predicted = predictCategory(itemNameInput.value);
       const categorySelect = document.getElementById('itemCategory');
@@ -705,13 +678,10 @@
         adminUrl = `https://admin.snkrdunk.com/admin/apparel/${itemId}/edit/`;
       }
 
-      // ① F列用データ (カテゴリ単体)
-      document.getElementById('resultDataF').value = itemCategory;
-
-      // ② K列〜Y列用データ
-      // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:空, Q:ブランド, R:商品ページ, S:管理画面URL, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
+      // K列〜Y列までを一気にまとめる配列
+      // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:カテゴリ, Q:ブランド, R:商品ページ, S:管理画面URL, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
       const data = [
-        "検品Wチェック済", "", itemName, itemId, modelNumber, "", brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, "", staff
+        "検品Wチェック済", "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, "", staff
       ];
       
       document.getElementById('resultData').value = data.join('\t');
@@ -747,23 +717,17 @@
       document.getElementById('categoryAutoMsg').style.display = 'none';
     });
 
-    // コピーボタンの設定関数
-    const setupCopyBtn = (btnId, inputId, defaultText) => {
-      const btn = document.getElementById(btnId);
-      btn.addEventListener('click', () => {
-        navigator.clipboard.writeText(document.getElementById(inputId).value).then(() => {
-          btn.textContent = '✓ コピー済';
-          btn.style.backgroundColor = '#1e7e34';
-          setTimeout(() => {
-            btn.textContent = defaultText;
-            btn.style.backgroundColor = '#28a745';
-          }, 2000);
-        }).catch(() => alert('コピーに失敗しました。'));
-      });
-    };
-
-    setupCopyBtn('copyBtnF', 'resultDataF', 'コピー');
-    setupCopyBtn('copyBtn', 'resultData', 'K列〜一括コピー');
+    const copyBtn = document.getElementById('copyBtn');
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(document.getElementById('resultData').value).then(() => {
+        copyBtn.textContent = '✓ コピー済';
+        copyBtn.style.backgroundColor = '#1e7e34';
+        setTimeout(() => {
+          copyBtn.textContent = '一括コピーする';
+          copyBtn.style.backgroundColor = '#28a745';
+        }, 2000);
+      }).catch(() => alert('コピーに失敗しました。'));
+    });
 
     // --- Enterキー ダブルタップで「次へ」進む処理 ---
     let lastEnterTime = 0;
