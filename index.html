@@ -101,6 +101,22 @@
     
     .btn-google { background-color: #4285F4; margin-top: 5px; }
     .btn-google:disabled { background-color: #a0c1f9; cursor: not-allowed; }
+
+    .copy-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+    .copy-row input {
+      flex: 1;
+      background-color: #f8f9fa;
+      color: #495057;
+    }
+    .copy-row button {
+      flex: 0 0 90px;
+      padding: 10px 5px;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -192,6 +208,77 @@
       </div>
     </div>
 
+    <!-- Step Category: カテゴリ選択（新規追加・自動選択機能付き） -->
+    <div id="stepCategory" class="step">
+      <div class="form-group">
+        <label for="itemCategory">カテゴリ</label>
+        <select id="itemCategory">
+          <option value="">選択してください</option>
+          <option value="その他">その他</option>
+          <option value="ウォレットチェーン">ウォレットチェーン</option>
+          <option value="カーゴパンツ">カーゴパンツ</option>
+          <option value="キーホルダー・キーチェーン">キーホルダー・キーチェーン</option>
+          <option value="コイン&カードケース">コイン&カードケース</option>
+          <option value="コート">コート</option>
+          <option value="サンダル">サンダル</option>
+          <option value="シューズ">シューズ</option>
+          <option value="ショルダー・メッセンジャー">ショルダー・メッセンジャー</option>
+          <option value="ショートパンツ">ショートパンツ</option>
+          <option value="ジャケット">ジャケット</option>
+          <option value="スウェットパンツ">スウェットパンツ</option>
+          <option value="スウェット・トレーナー">スウェット・トレーナー</option>
+          <option value="スカート">スカート</option>
+          <option value="スラックス">スラックス</option>
+          <option value="セットアップ">セットアップ</option>
+          <option value="ソックス">ソックス</option>
+          <option value="タンクトップ&ノースリーブ">タンクトップ&ノースリーブ</option>
+          <option value="ダウンジャケット">ダウンジャケット</option>
+          <option value="チノパンツ・ワークパンツ">チノパンツ・ワークパンツ</option>
+          <option value="デニム・ジーンズ">デニム・ジーンズ</option>
+          <option value="トラックパンツ">トラックパンツ</option>
+          <option value="トートバッグ">トートバッグ</option>
+          <option value="ニット・セーター">ニット・セーター</option>
+          <option value="ネックレス">ネックレス</option>
+          <option value="バックパック">バックパック</option>
+          <option value="バッグ">バッグ</option>
+          <option value="バングル・ブレスレット">バングル・ブレスレット</option>
+          <option value="パーカー">パーカー</option>
+          <option value="ビーニー・ニットキャップ">ビーニー・ニットキャップ</option>
+          <option value="ピアス・イヤリング">ピアス・イヤリング</option>
+          <option value="フリースジャケット">フリースジャケット</option>
+          <option value="ブルゾンジャケット">ブルゾンジャケット</option>
+          <option value="ブーツ">ブーツ</option>
+          <option value="ベスト">ベスト</option>
+          <option value="ベルト・バックル">ベルト・バックル</option>
+          <option value="ペンダント・チャーム">ペンダント・チャーム</option>
+          <option value="ボトムス">ボトムス</option>
+          <option value="ポーチ">ポーチ</option>
+          <option value="マウンテンジャケット">マウンテンジャケット</option>
+          <option value="マフラー・スカーフ">マフラー・スカーフ</option>
+          <option value="リング・指輪">リング・指輪</option>
+          <option value="レザーシューズ">レザーシューズ</option>
+          <option value="ローファー">ローファー</option>
+          <option value="半袖Tシャツ">半袖Tシャツ</option>
+          <option value="半袖シャツ">半袖シャツ</option>
+          <option value="帽子">帽子</option>
+          <option value="手袋">手袋</option>
+          <option value="折り財布">折り財布</option>
+          <option value="時計">時計</option>
+          <option value="眼鏡・サングラス">眼鏡・サングラス</option>
+          <option value="財布">財布</option>
+          <option value="財布・小物">財布・小物</option>
+          <option value="長袖Tシャツ">長袖Tシャツ</option>
+          <option value="長袖シャツ">長袖シャツ</option>
+          <option value="長財布">長財布</option>
+        </select>
+        <div id="categoryAutoMsg" class="success-text">✓ 商品名からカテゴリを自動推測しました</div>
+      </div>
+      <div class="btn-group">
+        <button id="backCategory" class="btn-secondary">戻る</button>
+        <button id="nextCategory" class="btn-primary" disabled>次へ</button>
+      </div>
+    </div>
+
     <!-- Step 6: サイズ入力 (大文字変換) -->
     <div id="step6" class="step">
       <div class="form-group">
@@ -239,14 +326,23 @@
       </div>
     </div>
 
-    <!-- Step 9: コピー画面（一括化） -->
+    <!-- Step 9: コピー画面 -->
     <div id="step9" class="step">
       
       <div class="form-group">
-        <label>スプレッドシート用データ (一括)</label>
+        <label>① F列用 (カテゴリ)</label>
+        <div class="copy-row">
+          <input type="text" id="resultDataF" readonly>
+          <button id="copyBtnF" class="btn-success">コピー</button>
+        </div>
+        <div class="hint-text">※スプレッドシートの <b>F列</b> のセルを選択して貼り付けてください。</div>
+      </div>
+
+      <div class="form-group" style="margin-top: 25px;">
+        <label>② K列〜Y列用 (一括データ)</label>
         <textarea id="resultData" rows="3" readonly></textarea>
         <div class="hint-text" style="color: #28a745; font-weight: bold; margin-top: 10px;">
-          ※S列の管理画面URLはツール側で自動生成されてペーストされます。スプレッドシート側のS列の関数は消えても（上書きされても）問題ありません。
+          ※S列の管理画面URLはツール側で自動生成されてペーストされます。
         </div>
         <div class="hint-text" style="margin-top: 5px;">
           スプレッドシートの <b>K列</b> のセルを選択して貼り付けてください。<br>
@@ -255,7 +351,7 @@
       </div>
 
       <div class="btn-group" style="margin-top: 20px;">
-        <button id="copyBtn" class="btn-success">一括コピーする</button>
+        <button id="copyBtn" class="btn-success">K列〜一括コピー</button>
       </div>
       
       <div class="btn-group" style="margin-top: 15px;">
@@ -311,6 +407,79 @@
       } else {
         return itemPageValue;
       }
+    };
+
+    // --- 商品名からカテゴリを自動判定するロジック ---
+    const predictCategory = (title) => {
+      if (!title) return "";
+      const t = title.toLowerCase();
+
+      // キーワード判定テーブル (優先度の高い順)
+      if (t.includes("down jacket") || t.includes("down park") || t.includes("ダウン")) return "ダウンジャケット";
+      if (t.includes("fleece") || t.includes("フリース")) return "フリースジャケット";
+      if (t.includes("mountain") || t.includes("マウンテン")) return "マウンテンジャケット";
+      if (t.includes("blouson") || t.includes("ブルゾン") || t.includes("bomber") || t.includes("ma-1")) return "ブルゾンジャケット";
+      if (t.includes("coat") || t.includes("コート")) return "コート";
+      if (t.includes("jacket") || t.includes("ジャケット")) return "ジャケット";
+      if (t.includes("vest") || t.includes("ベスト")) return "ベスト";
+
+      if (t.includes("long sleeve tee") || t.includes("l/s tee") || t.includes("l/s shirt") || t.includes("長袖t")) return "長袖Tシャツ";
+      if (t.includes("short sleeve shirt") || t.includes("s/s shirt") || t.includes("半袖シャツ")) return "半袖シャツ";
+      if (t.includes("long sleeve shirt") || t.includes("長袖シャツ")) return "長袖シャツ";
+      if (t.includes("tee") || t.includes("t-shirt") || t.includes("s/s") || t.includes("半袖")) return "半袖Tシャツ";
+      
+      if (t.includes("hoodie") || t.includes("hooded") || t.includes("パーカー")) return "パーカー";
+      if (t.includes("sweatshirt") || t.includes("crewneck") || t.includes("トレーナー") || t.includes("スウェット")) return "スウェット・トレーナー";
+      if (t.includes("sweater") || t.includes("knit") || t.includes("ニット") || t.includes("セーター")) return "ニット・セーター";
+      if (t.includes("tank") || t.includes("sleeveless") || t.includes("タンクトップ")) return "タンクトップ&ノースリーブ";
+
+      if (t.includes("cargo") || t.includes("カーゴ")) return "カーゴパンツ";
+      if (t.includes("track pant") || t.includes("トラックパンツ")) return "トラックパンツ";
+      if (t.includes("sweatpant") || t.includes("スウェットパンツ")) return "スウェットパンツ";
+      if (t.includes("short") || t.includes("ショーツ") || t.includes("ハーフパンツ")) return "ショートパンツ";
+      if (t.includes("slacks") || t.includes("スラックス")) return "スラックス";
+      if (t.includes("chino") || t.includes("チノ")) return "チノパンツ・ワークパンツ";
+      if (t.includes("denim") || t.includes("jean") || t.includes("デニム") || t.includes("ジーンズ")) return "デニム・ジーンズ";
+      if (t.includes("pant") || t.includes("trouser") || t.includes("パンツ") || t.includes("ボトム")) return "ボトムス";
+      if (t.includes("skirt") || t.includes("スカート")) return "スカート";
+
+      if (t.includes("setup") || t.includes("suit") || t.includes("セットアップ")) return "セットアップ";
+
+      if (t.includes("beanie") || t.includes("ビーニー")) return "ビーニー・ニットキャップ";
+      if (t.includes("cap") || t.includes("hat") || t.includes("キャップ") || t.includes("ハット") || t.includes("帽子")) return "帽子";
+
+      if (t.includes("loafer") || t.includes("ローファー")) return "ローファー";
+      if (t.includes("leather shoe") || t.includes("革靴")) return "レザーシューズ";
+      if (t.includes("boot") || t.includes("ブーツ")) return "ブーツ";
+      if (t.includes("sandal") || t.includes("サンダル") || t.includes("slide")) return "サンダル";
+      if (t.includes("shoe") || t.includes("sneaker") || t.includes("シューズ") || t.includes("スニーカー")) return "シューズ";
+
+      if (t.includes("backpack") || t.includes("バックパック") || t.includes("リュック")) return "バックパック";
+      if (t.includes("tote") || t.includes("トート")) return "トートバッグ";
+      if (t.includes("shoulder") || t.includes("messenger") || t.includes("ショルダー")) return "ショルダー・メッセンジャー";
+      if (t.includes("pouch") || t.includes("ポーチ")) return "ポーチ";
+      if (t.includes("bag") || t.includes("バッグ")) return "バッグ";
+
+      if (t.includes("long wallet") || t.includes("長財布")) return "長財布";
+      if (t.includes("wallet chain") || t.includes("ウォレットチェーン")) return "ウォレットチェーン";
+      if (t.includes("wallet") || t.includes("折り財布") || t.includes("二つ折り")) return "折り財布";
+      if (t.includes("coin") || t.includes("card case") || t.includes("コインケース") || t.includes("カードケース")) return "コイン&カードケース";
+
+      if (t.includes("necklace") || t.includes("ネックレス")) return "ネックレス";
+      if (t.includes("ring") || t.includes("指輪") || t.includes("リング")) return "リング・指輪";
+      if (t.includes("bangle") || t.includes("bracelet") || t.includes("ブレスレット") || t.includes("バングル")) return "バングル・ブレスレット";
+      if (t.includes("pierce") || t.includes("earring") || t.includes("ピアス") || t.includes("イヤリング")) return "ピアス・イヤリング";
+      if (t.includes("pendant") || t.includes("pendant") || t.includes("チャーム")) return "ペンダント・チャーム";
+      if (t.includes("keychain") || t.includes("keyring") || t.includes("キーホルダー") || t.includes("キーチェーン")) return "キーホルダー・キーチェーン";
+
+      if (t.includes("watch") || t.includes("時計")) return "時計";
+      if (t.includes("glasses") || t.includes("sunglass") || t.includes("サングラス") || t.includes("メガネ") || t.includes("眼鏡")) return "眼鏡・サングラス";
+      if (t.includes("belt") || t.includes("ベルト")) return "ベルト・バックル";
+      if (t.includes("scarf") || t.includes("muffler") || t.includes("マフラー") || t.includes("ストール")) return "マフラー・スカーフ";
+      if (t.includes("glove") || t.includes("手袋")) return "手袋";
+      if (t.includes("sock") || t.includes("ソックス") || t.includes("靴下")) return "ソックス";
+
+      return "";
     };
 
     // --- Step 1 (担当者) ---
@@ -385,7 +554,6 @@
       previousBrand = currentBrand;
       itemNameField.placeholder = `例: ${currentBrand} x The Exorcist Flannel Shirt "Black"`;
       
-      // 商品ページプレビューリンクの設定
       const resolvedUrl = getResolvedItemPage();
       const previewContainer = document.getElementById('itemPageLinkPreview');
       const previewLink = document.getElementById('itemPageLink');
@@ -456,8 +624,38 @@
         validateStep5();
       }, 800);
     });
+
     document.getElementById('back4').addEventListener('click', () => switchStep('step5', 'step4'));
-    next5Btn.addEventListener('click', () => switchStep('step5', 'step6'));
+    
+    // Step 5 -> Step Category への遷移と自動選択の実行
+    next5Btn.addEventListener('click', () => {
+      const predicted = predictCategory(itemNameInput.value);
+      const categorySelect = document.getElementById('itemCategory');
+      const autoMsg = document.getElementById('categoryAutoMsg');
+      const nextCatBtn = document.getElementById('nextCategory');
+
+      if (predicted !== "") {
+        categorySelect.value = predicted;
+        autoMsg.style.display = 'block';
+        nextCatBtn.disabled = false;
+      } else {
+        autoMsg.style.display = 'none';
+        nextCatBtn.disabled = (categorySelect.value === "");
+      }
+
+      switchStep('step5', 'stepCategory');
+    });
+
+    // --- Step Category (カテゴリ) ---
+    const itemCategorySelect = document.getElementById('itemCategory');
+    const nextCategoryBtn = document.getElementById('nextCategory');
+
+    itemCategorySelect.addEventListener('change', () => {
+      nextCategoryBtn.disabled = itemCategorySelect.value === "";
+      document.getElementById('categoryAutoMsg').style.display = 'none';
+    });
+    document.getElementById('backCategory').addEventListener('click', () => switchStep('stepCategory', 'step5'));
+    nextCategoryBtn.addEventListener('click', () => switchStep('stepCategory', 'step6'));
 
     // --- Step 6 (サイズ) 大文字変換 ---
     const itemSizeInput = document.getElementById('itemSize');
@@ -470,7 +668,7 @@
 
       next6Btn.disabled = this.value.trim() === "";
     });
-    document.getElementById('back5').addEventListener('click', () => switchStep('step6', 'step5'));
+    document.getElementById('back5').addEventListener('click', () => switchStep('step6', 'stepCategory'));
     next6Btn.addEventListener('click', () => switchStep('step6', 'step7'));
 
     // --- Step 7 (商品状態) ---
@@ -494,21 +692,23 @@
       const itemId = document.getElementById('itemId').value.trim();
       const modelNumber = document.getElementById('modelNumber').value;
       const brand = document.getElementById('brand').value;
+      const itemCategory = document.getElementById('itemCategory').value;
       const itemSize = document.getElementById('itemSize').value;
       const itemCondition = document.getElementById('itemCondition').value;
       const itemAccessories = document.getElementById('itemAccessories').value;
       const staff = document.getElementById('staff').value;
 
-      // ID有無に基づく商品ページURL(R列)の生成
       const resolvedItemPage = getResolvedItemPage();
 
-      // S列の管理画面URLを自動生成（IDが入力されている場合のみ）
       let adminUrl = "";
       if (itemId !== "") {
         adminUrl = `https://admin.snkrdunk.com/admin/apparel/${itemId}/edit/`;
       }
 
-      // K列〜Y列までを一気にまとめる配列
+      // ① F列用データ (カテゴリ単体)
+      document.getElementById('resultDataF').value = itemCategory;
+
+      // ② K列〜Y列用データ
       // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:空, Q:ブランド, R:商品ページ, S:管理画面URL, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
       const data = [
         "検品Wチェック済", "", itemName, itemId, modelNumber, "", brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, "", staff
@@ -529,32 +729,41 @@
       document.getElementById('itemPage').value = "";
       brandInput.value = "";
       itemNameInput.value = "";
+      itemCategorySelect.value = "";
       itemSizeInput.value = "";
       itemConditionSelect.value = "";
       itemAccessoriesInput.value = "";
       previousBrand = "";
       document.getElementById('itemPageLinkPreview').style.display = 'none';
       
-      // ボタンとエラー表示の初期化
+      // ボタンと表示の初期化
       googleSearchBtn.disabled = true;
       next4Btn.disabled = true;
       next5Btn.disabled = true;
+      nextCategoryBtn.disabled = true;
       next6Btn.disabled = true;
       next7Btn.disabled = true;
       translateMsg.style.display = 'none';
+      document.getElementById('categoryAutoMsg').style.display = 'none';
     });
 
-    const copyBtn = document.getElementById('copyBtn');
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(document.getElementById('resultData').value).then(() => {
-        copyBtn.textContent = '✓ コピー済';
-        copyBtn.style.backgroundColor = '#1e7e34';
-        setTimeout(() => {
-          copyBtn.textContent = '一括コピーする';
-          copyBtn.style.backgroundColor = '#28a745';
-        }, 2000);
-      }).catch(() => alert('コピーに失敗しました。'));
-    });
+    // コピーボタンの設定関数
+    const setupCopyBtn = (btnId, inputId, defaultText) => {
+      const btn = document.getElementById(btnId);
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(document.getElementById(inputId).value).then(() => {
+          btn.textContent = '✓ コピー済';
+          btn.style.backgroundColor = '#1e7e34';
+          setTimeout(() => {
+            btn.textContent = defaultText;
+            btn.style.backgroundColor = '#28a745';
+          }, 2000);
+        }).catch(() => alert('コピーに失敗しました。'));
+      });
+    };
+
+    setupCopyBtn('copyBtnF', 'resultDataF', 'コピー');
+    setupCopyBtn('copyBtn', 'resultData', 'K列〜一括コピー');
 
     // --- Enterキー ダブルタップで「次へ」進む処理 ---
     let lastEnterTime = 0;
