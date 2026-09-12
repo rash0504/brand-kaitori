@@ -52,6 +52,11 @@
       margin-top: 5px;
       display: none;
     }
+    .hint-text {
+      color: #666;
+      font-size: 0.8rem;
+      margin-top: 5px;
+    }
     .btn-group { display: flex; gap: 10px; margin-top: 20px; }
     button {
       flex: 1;
@@ -101,61 +106,158 @@
       </div>
       <div class="btn-group">
         <button id="back1" class="btn-secondary">戻る</button>
-        <button id="next2" class="btn-primary" disabled>次へ（準備中）</button>
+        <button id="next2" class="btn-primary" disabled>次へ</button>
+      </div>
+    </div>
+
+    <!-- Step 3: ブランド選択 -->
+    <div id="step3" class="step">
+      <div class="form-group">
+        <label for="brand">ブランド</label>
+        <input type="text" id="brand" list="brandList" placeholder="文字を入力して絞り込み">
+        <datalist id="brandList"></datalist>
+        <div class="hint-text">※リストにないブランドも手入力可能です</div>
+      </div>
+      <div class="btn-group">
+        <button id="back2" class="btn-secondary">戻る</button>
+        <button id="next3" class="btn-primary" disabled>次へ</button>
+      </div>
+    </div>
+
+    <!-- Step 4: 商品名入力 -->
+    <div id="step4" class="step">
+      <div class="form-group">
+        <label for="itemName">商品名</label>
+        <input type="text" id="itemName" placeholder="例: Supreme x The Exorcist Flannel Shirt “Black”">
+        <div class="hint-text">※必ず ブランド名 商品名 “カラー“ の順にしてください</div>
+      </div>
+      <div class="btn-group">
+        <button id="back3" class="btn-secondary">戻る</button>
+        <button id="next4" class="btn-primary" disabled>次へ（準備中）</button>
       </div>
     </div>
 
   </div>
 
   <script>
-    // 要素の取得
-    const staffSelect = document.getElementById('staff');
-    const next1Btn = document.getElementById('next1');
-    const transactionId = document.getElementById('transactionId');
-    const itemCount = document.getElementById('itemCount');
-    const next2Btn = document.getElementById('next2');
-    const idError = document.getElementById('idError');
-    const step1 = document.getElementById('step1');
-    const step2 = document.getElementById('step2');
-
-    // Step 1 の制御
-    staffSelect.addEventListener('change', (e) => {
-      next1Btn.disabled = e.target.value === "";
+    // --- 初期データ準備 ---
+    const rawBrands = [
+      "A.PRESSE", "AMI PARIS", "ANCELLM", "AURALEE", "BLACK COMME des GARCONS", "BODE", "CELINE", "COMME des GARCONS HOMME", 
+      "COMME des GARCONS HOMME Deux", "COMME des GARCONS HOMME PLUS", "COMME des GARCONS SHIRT", "DIOR", "DRIES VAN NOTEN", 
+      "HEUGN", "ISSEY MIYAKE", "JIL SANDER", "JUNYA WATANABE", "LEMAIRE", "LOEWE", "Maison Margiela", "MIU MIU", 
+      "MM6 Maison Margiela", "NICENESS", "sacai", "SAINT LAURENT", "T.T", "The Row", "Yohji Yamamoto", "yoke", 
+      "©SAINT M××××××", "Acne Studios", "AMIRI", "BALENCIAGA", "BOTTEGA VENETA", "Burberry", "Chrome Hearts", "GUCCI", 
+      "LOUIS VUITTON", "Moncler", "OUR LEGACY", "PRADA", "RAF SIMONS", "Rick Owens", "Rick Owens DRKSHDW", "Y-3", "adidas", 
+      "ARC’TERYX", "C.P. Company", "CANADA GOOSE", "Cav Empt", "COMOLI", "creek", "DAIWA PIER39", "ENNOY", "everyone", 
+      "Goldwin", "graphpaper", "HYKE", "LEVI’S", "LEVI’S Vintage Clothing", "Needles", "patagonia", "Polo Ralph Lauren", 
+      "ssstein", "STONE ISLAND", "visvim", "BOUCHERON", "BVLGARI", "Cartier", "Casio", "CHANEL", "DAMIANI", "Hermes", 
+      "HUMAN MADE", "Supreme", "Tiffany & Co.", "TOM WOOD", "Van Cleef & Arpels", "Chloe", "DIESEL", "FENDI", "GOYARD", 
+      "MARNI", "MCM", "STELLA McCARTNEY", "AUDEMARS PIGUET", "Breitling", "Grand Seiko", "HUBLOT", "IWC", "OMEGA", 
+      "ŌTSUKA LŌTEC", "Panerai", "PATEK PHILIPPE", "ROLEX", "TAG Heuer", "TUDOR", "ZENITH", "A BATHING APE", "AIR JORDAN", 
+      "BlackEyePatch", "BoTT", "Buffer", "Carhartt", "Carhartt WIP", "CDG", "DENIM TEARS", "F.C.Real Bristol", "FRAGMENT", 
+      "GEEKS RULE", "Gentle Monster", "Girls Don’t Cr", "HYSTERIC GLAMOUR", "KENZO", "NEIGHBORHOOD", "Noah", 
+      "PLAY COMME des GARCONS", "SEE SEE", "Stussy", "THE NORTH FACE", "THUG CLUB", "UNDERCOVER", "VAULTROOM", "VERDY", 
+      "WACKO MARIA", "Wasted Youth", "WIND AND SEA", "WTAPS", "drew house", "ESSENTIALS", "FEAR OF GOD", "KITH", 
+      "OFF-WHITE", "PALACE", "PEACEMINUSONE", "PORTER", "Travis Scott Cactus Jack", "YEEZY"
+    ];
+    // いただいたリストの重複を削除し、アルファベット順にソート
+    const uniqueBrands = [...new Set(rawBrands)].sort((a, b) => a.localeCompare(b, 'en', {sensitivity: 'base'}));
+    
+    // データリスト(サジェスト)にブランドを追加
+    const datalist = document.getElementById('brandList');
+    uniqueBrands.forEach(brand => {
+      const option = document.createElement('option');
+      option.value = brand;
+      datalist.appendChild(option);
     });
 
-    next1Btn.addEventListener('click', () => {
+    // --- 要素の取得 ---
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const step4 = document.getElementById('step4');
+
+    // --- Step 1 制御 ---
+    document.getElementById('staff').addEventListener('change', (e) => {
+      document.getElementById('next1').disabled = e.target.value === "";
+    });
+    document.getElementById('next1').addEventListener('click', () => {
       step1.classList.remove('active');
       step2.classList.add('active');
     });
+
+    // --- Step 2 制御 ---
+    const transactionId = document.getElementById('transactionId');
+    const itemCount = document.getElementById('itemCount');
+    const next2Btn = document.getElementById('next2');
+    
+    const validateStep2 = () => {
+      const idPattern = /^\d{1,2}-\d+-\d{1,2}$/;
+      const isIdValid = idPattern.test(transactionId.value.trim());
+      const isCountValid = parseInt(itemCount.value, 10) > 0;
+      
+      document.getElementById('idError').style.display = (transactionId.value !== "" && !isIdValid) ? 'block' : 'none';
+      next2Btn.disabled = !(isIdValid && isCountValid);
+    };
+    transactionId.addEventListener('input', validateStep2);
+    itemCount.addEventListener('input', validateStep2);
 
     document.getElementById('back1').addEventListener('click', () => {
       step2.classList.remove('active');
       step1.classList.add('active');
     });
+    next2Btn.addEventListener('click', () => {
+      step2.classList.remove('active');
+      step3.classList.add('active');
+    });
 
-    // Step 2 の制御 (IDの正規表現チェックと件数確認)
-    const validateStep2 = () => {
-      // (1〜2桁)-(数字のみ)-(1〜2桁)のチェック
-      const idPattern = /^\d{1,2}-\d+-\d{1,2}$/;
-      const idValue = transactionId.value.trim();
-      const countValue = parseInt(itemCount.value, 10);
+    // --- Step 3 制御 ---
+    const brandInput = document.getElementById('brand');
+    const next3Btn = document.getElementById('next3');
+    brandInput.addEventListener('input', () => {
+      next3Btn.disabled = brandInput.value.trim() === "";
+    });
 
-      const isIdValid = idPattern.test(idValue);
-      const isCountValid = countValue > 0;
-
-      // エラーメッセージの表示/非表示
-      if (idValue !== "" && !isIdValid) {
-        idError.style.display = 'block';
-      } else {
-        idError.style.display = 'none';
+    document.getElementById('back2').addEventListener('click', () => {
+      step3.classList.remove('active');
+      step2.classList.add('active');
+    });
+    next3Btn.addEventListener('click', () => {
+      step3.classList.remove('active');
+      step4.classList.add('active');
+      
+      // Step 4に進んだ際、ブランド名を商品名入力欄に自動で入れる
+      const selectedBrand = brandInput.value.trim();
+      const itemNameInput = document.getElementById('itemName');
+      
+      // まだ入力がない（空の）場合だけブランド名を挿入する
+      if (itemNameInput.value === "") {
+        itemNameInput.value = selectedBrand + " ";
       }
+      
+      // プレースホルダーを動的に変更
+      itemNameInput.placeholder = `例: ${selectedBrand} x The Exorcist Flannel Shirt “Black”`;
+      
+      // 商品名欄のバリデーションを実行（ブランド名が既に入っているため「次へ」を有効化）
+      validateStep4();
+    });
 
-      // 両方正しければ「次へ」ボタンを有効化
-      next2Btn.disabled = !(isIdValid && isCountValid);
+    // --- Step 4 制御 ---
+    const itemNameInput = document.getElementById('itemName');
+    const next4Btn = document.getElementById('next4');
+    
+    const validateStep4 = () => {
+      // 選択したブランド名に加えて、追加で何か文字が入力されているかチェック
+      const selectedBrand = brandInput.value.trim();
+      const currentItemName = itemNameInput.value.trim();
+      next4Btn.disabled = (currentItemName === "" || currentItemName === selectedBrand);
     };
+    itemNameInput.addEventListener('input', validateStep4);
 
-    transactionId.addEventListener('input', validateStep2);
-    itemCount.addEventListener('input', validateStep2);
+    document.getElementById('back3').addEventListener('click', () => {
+      step4.classList.remove('active');
+      step3.classList.add('active');
+    });
   </script>
 
 </body>
