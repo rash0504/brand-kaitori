@@ -54,7 +54,7 @@
     }
     .success-text {
       color: #28a745;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: bold;
       margin-top: 5px;
       display: none;
@@ -106,7 +106,6 @@
         <label for="transactionId">取引ID</label>
         <input type="text" id="transactionId" placeholder="例: 1-123456-1">
         <div id="idError" class="error-text">形式が正しくありません (例: 1-123456-12)</div>
-        <div id="extractedId" class="success-text"></div>
       </div>
       <div class="form-group">
         <label for="itemCount">件数</label>
@@ -137,6 +136,7 @@
       <div class="form-group">
         <label for="itemName">商品名</label>
         <input type="text" id="itemName" placeholder="例: Supreme x The Exorcist Flannel Shirt “Black”">
+        <div id="translateMsg" class="success-text"></div>
         <div class="hint-text">※必ず ブランド名 商品名 “カラー“ の順にしてください</div>
       </div>
       <div class="btn-group">
@@ -196,40 +196,13 @@
     const transactionId = document.getElementById('transactionId');
     const itemCount = document.getElementById('itemCount');
     const next2Btn = document.getElementById('next2');
-    const idError = document.getElementById('idError');
-    const extractedIdText = document.getElementById('extractedId');
     
-    // 抽出用の変数（後でスプレッドシートにコピーする用）
-    let finalUserId = "";
-
     const validateStep2 = () => {
-      // カッコ()を使って真ん中の数字グループだけを抽出できるようにする
-      const idPattern = /^\d{1,2}-(\d+)-\d{1,2}$/;
-      const rawIdValue = transactionId.value.trim();
-      const countValue = parseInt(itemCount.value, 10);
+      const idPattern = /^\d{1,2}-\d+-\d{1,2}$/;
+      const isIdValid = idPattern.test(transactionId.value.trim());
+      const isCountValid = parseInt(itemCount.value, 10) > 0;
       
-      const matchResult = rawIdValue.match(idPattern);
-      const isIdValid = matchResult !== null;
-      const isCountValid = countValue > 0;
-      
-      if (rawIdValue !== "") {
-        if (isIdValid) {
-          idError.style.display = 'none';
-          extractedIdText.style.display = 'block';
-          // 真ん中の数字(ユーザーID)を抽出して画面に表示
-          finalUserId = matchResult[1]; 
-          extractedIdText.textContent = `✓ 抽出ID: ${finalUserId}`;
-        } else {
-          idError.style.display = 'block';
-          extractedIdText.style.display = 'none';
-          finalUserId = "";
-        }
-      } else {
-        idError.style.display = 'none';
-        extractedIdText.style.display = 'none';
-        finalUserId = "";
-      }
-
+      document.getElementById('idError').style.display = (transactionId.value !== "" && !isIdValid) ? 'block' : 'none';
       next2Btn.disabled = !(isIdValid && isCountValid);
     };
     
@@ -270,16 +243,59 @@
       validateStep4();
     });
 
-    // --- Step 4 制御 ---
+    // --- Step 4 制御 (自動翻訳機能付き) ---
     const itemNameInput = document.getElementById('itemName');
     const next4Btn = document.getElementById('next4');
+    const translateMsg = document.getElementById('translateMsg');
+    let typingTimer;
     
     const validateStep4 = () => {
       const selectedBrand = brandInput.value.trim();
       const currentItemName = itemNameInput.value.trim();
       next4Btn.disabled = (currentItemName === "" || currentItemName === selectedBrand);
     };
-    itemNameInput.addEventListener('input', validateStep4);
+
+    itemNameInput.addEventListener('input', () => {
+      validateStep4();
+      
+      // 入力やペーストが止まってから 0.8秒後に翻訳を実行
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(async () => {
+        const text = itemNameInput.value.trim();
+        
+        // 正規表現で日本語（ひらがな・カタカナ・漢字）が含まれているか判定
+        const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
+        
+        if (hasJapanese) {
+          // 翻訳中メッセージの表示
+          translateMsg.style.display = 'block';
+          translateMsg.style.color = '#007bff';
+          translateMsg.textContent = '英語へ自動翻訳中...';
+          next4Btn.disabled = true; // 翻訳完了まで次へ進めなくする
+          
+          try {
+            // 無料APIを利用して日本語から英語へ翻訳
+            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ja|en`);
+            const data = await res.json();
+            
+            if (data.responseData && data.responseData.translatedText) {
+              // 翻訳されたテキストを入力欄に上書き
+              itemNameInput.value = data.responseData.translatedText;
+            }
+            
+            translateMsg.style.color = '#28a745';
+            translateMsg.textContent = '✓ 翻訳完了';
+            // 2秒後にメッセージを消す
+            setTimeout(() => { translateMsg.style.display = 'none'; }, 2000);
+            
+          } catch (error) {
+            translateMsg.style.color = '#dc3545';
+            translateMsg.textContent = '翻訳エラー（手動で修正してください）';
+          }
+          validateStep4();
+        }
+      }, 800); // 800ミリ秒待機
+    });
 
     document.getElementById('back3').addEventListener('click', () => {
       step4.classList.remove('active');
