@@ -219,8 +219,8 @@
           ※注意: 一括ペーストするとR列・S列の関数が空白で上書きされ消えてしまいます。
         </div>
         <div class="hint-text" style="margin-top: 5px;">
-          スプレッドシートの <b>M列</b> のセルを選択して貼り付けてください。<br>
-          （M:商品名, N:ID, O:型番, Q:ブランド, U:サイズ, V:状態, W:付属品, Y:担当者）
+          スプレッドシートの <b>K列</b> のセルを選択して貼り付けてください。<br>
+          （K:検品Wチェック済, M:商品名, N:ID, O:型番, Q:ブランド, U:サイズ, V:状態, W:付属品, Y:担当者）
         </div>
       </div>
 
@@ -410,10 +410,10 @@
       const itemAccessories = document.getElementById('itemAccessories').value;
       const staff = document.getElementById('staff').value;
 
-      // M列〜Y列までを一気にまとめる配列
-      // M:商品名, N:ID, O:型番, P:空, Q:ブランド, R:空, S:空, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
+      // K列〜Y列までを一気にまとめる配列
+      // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:空, Q:ブランド, R:空, S:空, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
       const data = [
-        itemName, itemId, modelNumber, "", brand, "", "", "", itemSize, itemCondition, itemAccessories, "", staff
+        "検品Wチェック済", "", itemName, itemId, modelNumber, "", brand, "", "", "", itemSize, itemCondition, itemAccessories, "", staff
       ];
       
       document.getElementById('resultData').value = data.join('\t');
