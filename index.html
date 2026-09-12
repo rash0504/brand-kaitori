@@ -127,11 +127,24 @@
       <div class="form-group">
         <label for="itemId">ID (任意)</label>
         <input type="text" id="itemId" placeholder="例: 123456">
-        <div class="hint-text">※入力しなくても「次へ」進めます。</div>
+        <div class="hint-text">※入力しなくても「次へ」進めます。<br>※<b>IDを空欄にして進むと、「商品ページ」入力画面が表示されます。</b></div>
       </div>
       <div class="btn-group">
         <button id="back2" class="btn-secondary">戻る</button>
         <button id="next3" class="btn-primary">次へ</button>
+      </div>
+    </div>
+
+    <!-- Step Url: 商品ページ入力（ID未入力時のみ表示） -->
+    <div id="stepUrl" class="step">
+      <div class="form-group">
+        <label for="itemPage">商品ページ (任意)</label>
+        <input type="text" id="itemPage" placeholder="例: URLなどを入力">
+        <div class="hint-text">※入力しなくても「次へ」進めます。</div>
+      </div>
+      <div class="btn-group">
+        <button id="backUrl" class="btn-secondary">戻る</button>
+        <button id="nextUrl" class="btn-primary">次へ</button>
       </div>
     </div>
 
@@ -214,13 +227,13 @@
       
       <div class="form-group">
         <label>スプレッドシート用データ (一括)</label>
-        <textarea id="resultData" rows="2" readonly></textarea>
-        <div class="hint-text" style="color: #dc3545; font-weight: bold; margin-top: 10px;">
-          ※注意: 一括ペーストするとR列・S列の関数が空白で上書きされ消えてしまいます。
+        <textarea id="resultData" rows="3" readonly></textarea>
+        <div class="hint-text" style="color: #28a745; font-weight: bold; margin-top: 10px;">
+          ※S列の管理画面URLはツール側で自動生成されてペーストされます。スプレッドシート側のS列の関数は消えても（上書きされても）問題ありません。
         </div>
         <div class="hint-text" style="margin-top: 5px;">
           スプレッドシートの <b>K列</b> のセルを選択して貼り付けてください。<br>
-          （K:検品Wチェック済, M:商品名, N:ID, O:型番, Q:ブランド, U:サイズ, V:状態, W:付属品, Y:担当者）
+          （K:検品Wチェック済, M:商品名, N:ID, O:型番, Q:ブランド, R:商品ページ, <b>S:管理画面URL</b>, U:サイズ, V:状態, W:付属品, Y:担当者）
         </div>
       </div>
 
@@ -295,39 +308,52 @@
 
     // --- Step 3 (ID) ---
     document.getElementById('back2').addEventListener('click', () => switchStep('step3', 'step2'));
-    document.getElementById('next3').addEventListener('click', () => switchStep('step3', 'step4'));
+    document.getElementById('next3').addEventListener('click', () => {
+      const itemIdValue = document.getElementById('itemId').value.trim();
+      if (itemIdValue === "") {
+        switchStep('step3', 'stepUrl');
+      } else {
+        document.getElementById('itemPage').value = "";
+        switchStep('step3', 'step4');
+      }
+    });
+
+    // --- Step Url (商品ページ入力) ---
+    document.getElementById('backUrl').addEventListener('click', () => switchStep('stepUrl', 'step3'));
+    document.getElementById('nextUrl').addEventListener('click', () => switchStep('stepUrl', 'step4'));
 
     // --- Step 4 (ブランド) ---
     const brandInput = document.getElementById('brand');
     const next4Btn = document.getElementById('next4');
-    let previousBrand = ""; // 前回確定したブランド名を記憶する用
+    let previousBrand = ""; 
 
     brandInput.addEventListener('input', () => {
       next4Btn.disabled = brandInput.value.trim() === "";
     });
-    document.getElementById('back3').addEventListener('click', () => switchStep('step4', 'step3'));
+    document.getElementById('back3').addEventListener('click', () => {
+      if (document.getElementById('itemId').value.trim() === "") {
+        switchStep('step4', 'stepUrl');
+      } else {
+        switchStep('step4', 'step3');
+      }
+    });
     
     next4Btn.addEventListener('click', () => {
       const currentBrand = brandInput.value.trim();
       const itemNameField = document.getElementById('itemName');
       const currentValue = itemNameField.value;
 
-      // 初回入力時、または商品名が前回のブランド名だけのままの場合
       if (currentValue === "" || currentValue === previousBrand + " ") {
         itemNameField.value = currentBrand + " ";
-      } 
-      // 戻ってブランド名を修正した場合（商品名に既に続きが入力されている場合）
-      else if (previousBrand !== "" && currentValue.startsWith(previousBrand + " ")) {
+      } else if (previousBrand !== "" && currentValue.startsWith(previousBrand + " ")) {
         itemNameField.value = currentValue.replace(previousBrand + " ", currentBrand + " ");
-      } 
-      // 万が一、手動でブランド名を消していた場合などの補正
-      else if (currentValue !== "" && previousBrand === "") {
+      } else if (currentValue !== "" && previousBrand === "") {
         if (!currentValue.startsWith(currentBrand)) {
           itemNameField.value = currentBrand + " " + currentValue;
         }
       }
 
-      previousBrand = currentBrand; // 今回確定したブランドを記憶
+      previousBrand = currentBrand;
       itemNameField.placeholder = `例: ${currentBrand} x The Exorcist Flannel Shirt "Black"`;
       validateStep5();
       switchStep('step4', 'step5');
@@ -422,18 +448,25 @@
       switchStep('step8', 'step9');
       
       const itemName = document.getElementById('itemName').value;
-      const itemId = document.getElementById('itemId').value;
+      const itemId = document.getElementById('itemId').value.trim();
       const modelNumber = document.getElementById('modelNumber').value;
       const brand = document.getElementById('brand').value;
       const itemSize = document.getElementById('itemSize').value;
       const itemCondition = document.getElementById('itemCondition').value;
       const itemAccessories = document.getElementById('itemAccessories').value;
+      const itemPage = document.getElementById('itemPage').value;
       const staff = document.getElementById('staff').value;
 
+      // S列の管理画面URLを自動生成（IDが入力されている場合のみ）
+      let adminUrl = "";
+      if (itemId !== "") {
+        adminUrl = `https://admin.snkrdunk.com/admin/apparel/${itemId}/edit/`;
+      }
+
       // K列〜Y列までを一気にまとめる配列
-      // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:空, Q:ブランド, R:空, S:空, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
+      // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:空, Q:ブランド, R:商品ページ, S:管理画面URL, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
       const data = [
-        "検品Wチェック済", "", itemName, itemId, modelNumber, "", brand, "", "", "", itemSize, itemCondition, itemAccessories, "", staff
+        "検品Wチェック済", "", itemName, itemId, modelNumber, "", brand, itemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, "", staff
       ];
       
       document.getElementById('resultData').value = data.join('\t');
@@ -448,12 +481,13 @@
       // 入力値のクリア
       modelNumberInput.value = "";
       document.getElementById('itemId').value = "";
+      document.getElementById('itemPage').value = "";
       brandInput.value = "";
       itemNameInput.value = "";
       itemSizeInput.value = "";
       itemConditionSelect.value = "";
       itemAccessoriesInput.value = "";
-      previousBrand = ""; // 記憶したブランドもクリア
+      previousBrand = "";
       
       // ボタンとエラー表示の初期化
       googleSearchBtn.disabled = true;
@@ -476,24 +510,20 @@
       }).catch(() => alert('コピーに失敗しました。'));
     });
 
-    // --- 【追加】Enterキー ダブルタップで「次へ」進む処理 ---
+    // --- Enterキー ダブルタップで「次へ」進む処理 ---
     let lastEnterTime = 0;
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        // 日本語入力中（変換中）のEnterは無視する
         if (e.isComposing) return;
-
         const activeStep = document.querySelector('.step.active');
         if (activeStep) {
           const primaryBtn = activeStep.querySelector('.btn-primary');
-          // ボタンが存在し、押せる状態なら
           if (primaryBtn && !primaryBtn.disabled) {
             const currentTime = new Date().getTime();
-            // 800ミリ秒以内に2回連続でEnterが押されたらクリック
             if (currentTime - lastEnterTime < 800) {
               e.preventDefault();
               primaryBtn.click();
-              lastEnterTime = 0; // リセット
+              lastEnterTime = 0;
             } else {
               lastEnterTime = currentTime;
             }
