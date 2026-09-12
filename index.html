@@ -135,9 +135,9 @@
     <div id="step4" class="step">
       <div class="form-group">
         <label for="itemName">商品名</label>
-        <input type="text" id="itemName" placeholder="例: Supreme x The Exorcist Flannel Shirt “Black”">
+        <input type="text" id="itemName" placeholder="例: Supreme x The Exorcist Flannel Shirt &quot;Black&quot;">
         <div id="translateMsg" class="success-text"></div>
-        <div class="hint-text">※必ず ブランド名 商品名 “カラー“ の順にしてください</div>
+        <div class="hint-text">※必ず ブランド名 商品名 "カラー" の順にしてください</div>
       </div>
       <div class="btn-group">
         <button id="back3" class="btn-secondary">戻る</button>
@@ -239,15 +239,49 @@
       if (itemNameInput.value === "") {
         itemNameInput.value = selectedBrand + " ";
       }
-      itemNameInput.placeholder = `例: ${selectedBrand} x The Exorcist Flannel Shirt “Black”`;
+      itemNameInput.placeholder = `例: ${selectedBrand} x The Exorcist Flannel Shirt "Black"`;
       validateStep4();
     });
 
-    // --- Step 4 制御 (自動翻訳機能付き) ---
+    // --- Step 4 制御 (自動翻訳 ＆ カラー自動囲み機能) ---
     const itemNameInput = document.getElementById('itemName');
     const next4Btn = document.getElementById('next4');
     const translateMsg = document.getElementById('translateMsg');
     let typingTimer;
+
+    // カラー判定用のリスト
+    const colorList = [
+      "black", "white", "red", "blue", "green", "yellow", "orange", "purple", 
+      "pink", "brown", "grey", "gray", "navy", "olive", "beige", "silver", 
+      "gold", "khaki", "burgundy", "charcoal", "ivory", "cream", "multi", "multicolor"
+    ];
+
+    // 末尾が色なら "" で囲む関数
+    const formatColor = (text) => {
+      if (!text) return text;
+      const trimmed = text.trim();
+      
+      // 既に " や ” で終わっている場合は何もしない
+      if (trimmed.endsWith('"') || trimmed.endsWith('”') || trimmed.endsWith("'")) {
+        return text; 
+      }
+
+      const words = trimmed.split(' ');
+      if (words.length < 2) return text; // 1単語のみなら除外
+
+      const lastWord = words[words.length - 1];
+      // 記号を取り除いて小文字化し、色リストと照合
+      const cleanWord = lastWord.replace(/[^a-zA-Z]/g, '').toLowerCase();
+
+      if (colorList.includes(cleanWord)) {
+        words[words.length - 1] = `"${lastWord}"`;
+        // 後ろにスペースがある場合は維持する
+        const trailingSpace = text.endsWith(' ') ? ' ' : '';
+        return words.join(' ') + trailingSpace;
+      }
+      
+      return text;
+    };
     
     const validateStep4 = () => {
       const selectedBrand = brandInput.value.trim();
@@ -258,43 +292,46 @@
     itemNameInput.addEventListener('input', () => {
       validateStep4();
       
-      // 入力やペーストが止まってから 0.8秒後に翻訳を実行
+      // 入力が0.8秒間止まったら処理を実行
       clearTimeout(typingTimer);
       typingTimer = setTimeout(async () => {
-        const text = itemNameInput.value.trim();
-        
-        // 正規表現で日本語（ひらがな・カタカナ・漢字）が含まれているか判定
+        const text = itemNameInput.value;
         const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
         
         if (hasJapanese) {
-          // 翻訳中メッセージの表示
+          // --- 1. 自動翻訳 ＆ 色の囲み処理 ---
           translateMsg.style.display = 'block';
           translateMsg.style.color = '#007bff';
           translateMsg.textContent = '英語へ自動翻訳中...';
-          next4Btn.disabled = true; // 翻訳完了まで次へ進めなくする
+          next4Btn.disabled = true;
           
           try {
-            // 無料APIを利用して日本語から英語へ翻訳
-            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ja|en`);
+            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=ja|en`);
             const data = await res.json();
             
             if (data.responseData && data.responseData.translatedText) {
-              // 翻訳されたテキストを入力欄に上書き
-              itemNameInput.value = data.responseData.translatedText;
+              // 翻訳結果の末尾が色なら "" で囲む
+              itemNameInput.value = formatColor(data.responseData.translatedText);
             }
             
             translateMsg.style.color = '#28a745';
             translateMsg.textContent = '✓ 翻訳完了';
-            // 2秒後にメッセージを消す
             setTimeout(() => { translateMsg.style.display = 'none'; }, 2000);
             
           } catch (error) {
             translateMsg.style.color = '#dc3545';
             translateMsg.textContent = '翻訳エラー（手動で修正してください）';
           }
-          validateStep4();
+        } else {
+          // --- 2. 英語入力時の色の囲み処理 ---
+          const formattedText = formatColor(text);
+          if (formattedText !== text) {
+            itemNameInput.value = formattedText;
+          }
         }
-      }, 800); // 800ミリ秒待機
+        
+        validateStep4();
+      }, 800);
     });
 
     document.getElementById('back3').addEventListener('click', () => {
