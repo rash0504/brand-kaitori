@@ -114,7 +114,15 @@
         <label for="staff">担当者</label>
         <select id="staff">
           <option value="松並 欣汰" selected>松並 欣汰</option>
+          <option value="篠原 寿樹">篠原 寿樹</option>
+          <option value="椎名 葵">椎名 葵</option>
+          <option value="遠藤 わかな">遠藤 わかな</option>
+          <option value="市田 竜浩">市田 竜浩</option>
+          <option value="川田 俊">川田 俊</option>
+          <option value="市毛 怜隆">市毛 怜隆</option>
+          <option value="情報入力者">情報入力者</option>
         </select>
+        <div class="hint-text">※「情報入力者」を選択した場合、Y列（担当者欄）には何も反映されません</div>
       </div>
       <div class="btn-group">
         <button id="next1" class="btn-primary">次へ</button>
@@ -321,7 +329,7 @@
         </div>
         <div class="hint-text" style="margin-top: 5px;">
           スプレッドシートの <b>K列</b> のセルを選択して貼り付けてください。<br>
-          （K:検品Wチェック済, M:商品名, N:ID, O:型番, <b>P:カテゴリ</b>, Q:ブランド, R:商品ページ, S:管理画面URL, U:サイズ, V:状態, W:付属品, Y:担当者）
+          （K:検品Wチェック済, M:商品名, N:ID, O:型番, P:カテゴリ, Q:ブランド, R:商品ページ, S:管理画面URL, U:サイズ, V:状態, W:付属品, Y:担当者）
         </div>
       </div>
 
@@ -669,7 +677,10 @@
       const itemSize = document.getElementById('itemSize').value;
       const itemCondition = document.getElementById('itemCondition').value;
       const itemAccessories = document.getElementById('itemAccessories').value;
-      const staff = document.getElementById('staff').value;
+      const selectedStaff = document.getElementById('staff').value;
+
+      // 「情報入力者」が選ばれた場合はY列（担当者）を空文字にする
+      const staffVal = (selectedStaff === "情報入力者") ? "" : selectedStaff;
 
       const resolvedItemPage = getResolvedItemPage();
 
@@ -681,7 +692,7 @@
       // K列〜Y列までを一気にまとめる配列
       // K:検品Wチェック済, L:空, M:商品名, N:ID, O:型番, P:カテゴリ, Q:ブランド, R:商品ページ, S:管理画面URL, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
       const data = [
-        "検品Wチェック済", "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, "", staff
+        "検品Wチェック済", "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, "", staffVal
       ];
       
       document.getElementById('resultData').value = data.join('\t');
