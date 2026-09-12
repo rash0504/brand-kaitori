@@ -319,7 +319,7 @@
       </div>
     </div>
 
-    <!-- Step Note: 補足入力（任意・新規追加） -->
+    <!-- Step Note: 補足入力（任意） -->
     <div id="stepNote" class="step">
       <div class="form-group">
         <label for="itemNote">補足 (任意)</label>
@@ -536,14 +536,18 @@
       const currentBrand = brandInput.value.trim();
       const itemNameField = document.getElementById('itemName');
       const currentValue = itemNameField.value;
+      const itemIdVal = document.getElementById('itemId').value.trim();
 
-      if (currentValue === "" || currentValue === previousBrand + " ") {
-        itemNameField.value = currentBrand + " ";
-      } else if (previousBrand !== "" && currentValue.startsWith(previousBrand + " ")) {
-        itemNameField.value = currentValue.replace(previousBrand + " ", currentBrand + " ");
-      } else if (currentValue !== "" && previousBrand === "") {
-        if (!currentValue.startsWith(currentBrand)) {
-          itemNameField.value = currentBrand + " " + currentValue;
+      // IDが未入力の場合のみ、商品名にブランド名を自動セット・更新する
+      if (itemIdVal === "") {
+        if (currentValue === "" || currentValue === previousBrand + " ") {
+          itemNameField.value = currentBrand + " ";
+        } else if (previousBrand !== "" && currentValue.startsWith(previousBrand + " ")) {
+          itemNameField.value = currentValue.replace(previousBrand + " ", currentBrand + " ");
+        } else if (currentValue !== "" && previousBrand === "") {
+          if (!currentValue.startsWith(currentBrand)) {
+            itemNameField.value = currentBrand + " " + currentValue;
+          }
         }
       }
 
@@ -597,7 +601,17 @@
     };
     
     const validateStep5 = () => {
-      next5Btn.disabled = (itemNameInput.value.trim() === "" || itemNameInput.value.trim() === brandInput.value.trim());
+      const val = itemNameInput.value.trim();
+      const itemIdVal = document.getElementById('itemId').value.trim();
+      const selectedBrand = brandInput.value.trim();
+
+      if (itemIdVal === "") {
+        // ID未入力時は、商品名が空、またはブランド名だけの状態は不可
+        next5Btn.disabled = (val === "" || val === selectedBrand);
+      } else {
+        // ID入力時は、単純に空文字でなければOK
+        next5Btn.disabled = (val === "");
+      }
     };
 
     itemNameInput.addEventListener('input', () => {
