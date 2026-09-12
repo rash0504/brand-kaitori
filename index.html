@@ -52,6 +52,13 @@
       margin-top: 5px;
       display: none;
     }
+    .success-text {
+      color: #28a745;
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-top: 5px;
+      display: none;
+    }
     .hint-text {
       color: #666;
       font-size: 0.8rem;
@@ -99,6 +106,7 @@
         <label for="transactionId">取引ID</label>
         <input type="text" id="transactionId" placeholder="例: 1-123456-1">
         <div id="idError" class="error-text">形式が正しくありません (例: 1-123456-12)</div>
+        <div id="extractedId" class="success-text"></div>
       </div>
       <div class="form-group">
         <label for="itemCount">件数</label>
@@ -160,10 +168,8 @@
       "WACKO MARIA", "Wasted Youth", "WIND AND SEA", "WTAPS", "drew house", "ESSENTIALS", "FEAR OF GOD", "KITH", 
       "OFF-WHITE", "PALACE", "PEACEMINUSONE", "PORTER", "Travis Scott Cactus Jack", "YEEZY"
     ];
-    // いただいたリストの重複を削除し、アルファベット順にソート
     const uniqueBrands = [...new Set(rawBrands)].sort((a, b) => a.localeCompare(b, 'en', {sensitivity: 'base'}));
     
-    // データリスト(サジェスト)にブランドを追加
     const datalist = document.getElementById('brandList');
     uniqueBrands.forEach(brand => {
       const option = document.createElement('option');
@@ -190,15 +196,43 @@
     const transactionId = document.getElementById('transactionId');
     const itemCount = document.getElementById('itemCount');
     const next2Btn = document.getElementById('next2');
+    const idError = document.getElementById('idError');
+    const extractedIdText = document.getElementById('extractedId');
     
+    // 抽出用の変数（後でスプレッドシートにコピーする用）
+    let finalUserId = "";
+
     const validateStep2 = () => {
-      const idPattern = /^\d{1,2}-\d+-\d{1,2}$/;
-      const isIdValid = idPattern.test(transactionId.value.trim());
-      const isCountValid = parseInt(itemCount.value, 10) > 0;
+      // カッコ()を使って真ん中の数字グループだけを抽出できるようにする
+      const idPattern = /^\d{1,2}-(\d+)-\d{1,2}$/;
+      const rawIdValue = transactionId.value.trim();
+      const countValue = parseInt(itemCount.value, 10);
       
-      document.getElementById('idError').style.display = (transactionId.value !== "" && !isIdValid) ? 'block' : 'none';
+      const matchResult = rawIdValue.match(idPattern);
+      const isIdValid = matchResult !== null;
+      const isCountValid = countValue > 0;
+      
+      if (rawIdValue !== "") {
+        if (isIdValid) {
+          idError.style.display = 'none';
+          extractedIdText.style.display = 'block';
+          // 真ん中の数字(ユーザーID)を抽出して画面に表示
+          finalUserId = matchResult[1]; 
+          extractedIdText.textContent = `✓ 抽出ID: ${finalUserId}`;
+        } else {
+          idError.style.display = 'block';
+          extractedIdText.style.display = 'none';
+          finalUserId = "";
+        }
+      } else {
+        idError.style.display = 'none';
+        extractedIdText.style.display = 'none';
+        finalUserId = "";
+      }
+
       next2Btn.disabled = !(isIdValid && isCountValid);
     };
+    
     transactionId.addEventListener('input', validateStep2);
     itemCount.addEventListener('input', validateStep2);
 
@@ -226,19 +260,13 @@
       step3.classList.remove('active');
       step4.classList.add('active');
       
-      // Step 4に進んだ際、ブランド名を商品名入力欄に自動で入れる
       const selectedBrand = brandInput.value.trim();
       const itemNameInput = document.getElementById('itemName');
       
-      // まだ入力がない（空の）場合だけブランド名を挿入する
       if (itemNameInput.value === "") {
         itemNameInput.value = selectedBrand + " ";
       }
-      
-      // プレースホルダーを動的に変更
       itemNameInput.placeholder = `例: ${selectedBrand} x The Exorcist Flannel Shirt “Black”`;
-      
-      // 商品名欄のバリデーションを実行（ブランド名が既に入っているため「次へ」を有効化）
       validateStep4();
     });
 
@@ -247,7 +275,6 @@
     const next4Btn = document.getElementById('next4');
     
     const validateStep4 = () => {
-      // 選択したブランド名に加えて、追加で何か文字が入力されているかチェック
       const selectedBrand = brandInput.value.trim();
       const currentItemName = itemNameInput.value.trim();
       next4Btn.disabled = (currentItemName === "" || currentItemName === selectedBrand);
