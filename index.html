@@ -41,7 +41,13 @@
       box-sizing: border-box;
       font-size: 1rem;
     }
-    input:focus, select:focus {
+    textarea {
+      resize: vertical;
+      background-color: #f8f9fa;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: #007bff;
       box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
@@ -80,25 +86,8 @@
     .btn-success { background-color: #28a745; transition: 0.2s; }
     .btn-warning { background-color: #ffc107; color: #212529; }
     
-    /* Google検索ボタン用 */
     .btn-google { background-color: #4285F4; margin-top: 5px; }
     .btn-google:disabled { background-color: #a0c1f9; cursor: not-allowed; }
-    
-    .copy-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 5px;
-    }
-    .copy-row input {
-      flex: 1;
-      background-color: #f8f9fa;
-      color: #495057;
-    }
-    .copy-row button {
-      flex: 0 0 90px;
-      padding: 10px 5px;
-      font-size: 0.9rem;
-    }
   </style>
 </head>
 <body>
@@ -138,7 +127,7 @@
         <label for="modelNumber">型番 (任意)</label>
         <input type="text" id="modelNumber" placeholder="例: NP11834">
         <button id="googleSearchBtn" class="btn-google" disabled>Googleで検索する</button>
-        <div class="hint-text">※型番を入力して検索ボタンを押すと、別タブでGoogle検索が開きます。入力しなくても「次へ」進めます。</div>
+        <div class="hint-text">※型番を入力して検索ボタンを押すと、別タブでGoogle検索が開きます。</div>
       </div>
       <div class="btn-group">
         <button id="back2" class="btn-secondary">戻る</button>
@@ -152,7 +141,6 @@
         <label for="brand">ブランド</label>
         <input type="text" id="brand" list="brandList" placeholder="文字を入力して絞り込み">
         <datalist id="brandList"></datalist>
-        <div class="hint-text">※リストにないブランドも手入力可能です</div>
       </div>
       <div class="btn-group">
         <button id="back3" class="btn-secondary">戻る</button>
@@ -166,7 +154,6 @@
         <label for="itemName">商品名</label>
         <input type="text" id="itemName" placeholder="例: Supreme x The Exorcist Flannel Shirt &quot;Black × Blue&quot;">
         <div id="translateMsg" class="success-text"></div>
-        <div class="hint-text">※必ず ブランド名 商品名 "カラー" の順にしてください</div>
       </div>
       <div class="btn-group">
         <button id="back4" class="btn-secondary">戻る</button>
@@ -186,28 +173,25 @@
       </div>
     </div>
 
-    <!-- Step 7: コピー画面 -->
+    <!-- Step 7: コピー画面（一括化） -->
     <div id="step7" class="step">
       
       <div class="form-group">
-        <label>① M列用 (商品名〜型番〜ブランド)</label>
-        <div class="copy-row">
-          <input type="text" id="resultData1" readonly>
-          <button id="copyBtn1" class="btn-success">コピー</button>
+        <label>スプレッドシート用データ (一括)</label>
+        <textarea id="resultData" rows="2" readonly></textarea>
+        <div class="hint-text" style="color: #dc3545; font-weight: bold; margin-top: 10px;">
+          ※注意: 一括ペーストするとR列・S列の関数が空白で上書きされ消えてしまいます。スプレッドシート側の関数設定を「ARRAYFORMULA」にするか、関数の列を移動させる必要があります。
         </div>
-        <div class="hint-text">※スプレッドシートの <b>M列</b> のセルに貼り付けてください。<br>（M列:商品名, <b>O列:型番</b>, Q列:ブランド）</div>
+        <div class="hint-text" style="margin-top: 5px;">
+          スプレッドシートの <b>M列</b> のセルを選択して貼り付けてください。
+        </div>
       </div>
 
-      <div class="form-group" style="margin-top: 25px;">
-        <label>② U列用 (サイズ〜担当者)</label>
-        <div class="copy-row">
-          <input type="text" id="resultData2" readonly>
-          <button id="copyBtn2" class="btn-success">コピー</button>
-        </div>
-        <div class="hint-text">※スプレッドシートの <b>U列</b> のセルに貼り付けてください。<br>（U列:サイズ, Y列:担当者）</div>
+      <div class="btn-group" style="margin-top: 20px;">
+        <button id="copyBtn" class="btn-success">一括コピーする</button>
       </div>
-
-      <div class="btn-group" style="margin-top: 30px;">
+      
+      <div class="btn-group" style="margin-top: 15px;">
         <button id="back6" class="btn-secondary">戻る</button>
         <button id="resetBtn" class="btn-warning">最初から</button>
       </div>
@@ -216,7 +200,6 @@
   </div>
 
   <script>
-    // --- 初期データ準備 ---
     const rawBrands = [
       "A.PRESSE", "AMI PARIS", "ANCELLM", "AURALEE", "BLACK COMME des GARCONS", "BODE", "CELINE", "COMME des GARCONS HOMME", 
       "COMME des GARCONS HOMME Deux", "COMME des GARCONS HOMME PLUS", "COMME des GARCONS SHIRT", "DIOR", "DRIES VAN NOTEN", 
@@ -237,7 +220,6 @@
       "OFF-WHITE", "PALACE", "PEACEMINUSONE", "PORTER", "Travis Scott Cactus Jack", "YEEZY"
     ];
     const uniqueBrands = [...new Set(rawBrands)].sort((a, b) => a.localeCompare(b, 'en', {sensitivity: 'base'}));
-    
     const datalist = document.getElementById('brandList');
     uniqueBrands.forEach(brand => {
       const option = document.createElement('option');
@@ -245,7 +227,6 @@
       datalist.appendChild(option);
     });
 
-    // --- 要素の取得 ---
     const step1 = document.getElementById('step1');
     const step2 = document.getElementById('step2');
     const step3 = document.getElementById('step3');
@@ -254,23 +235,18 @@
     const step6 = document.getElementById('step6');
     const step7 = document.getElementById('step7');
 
-    // --- Step 1 ---
     document.getElementById('next1').addEventListener('click', () => {
       step1.classList.remove('active');
       step2.classList.add('active');
     });
 
-    // --- Step 2 (ID) ---
     const transactionId = document.getElementById('transactionId');
     const next2Btn = document.getElementById('next2');
-    
-    const validateStep2 = () => {
-      const idPattern = /^\d{1,2}-\d+-\d{1,2}$/;
-      const isIdValid = idPattern.test(transactionId.value.trim());
+    transactionId.addEventListener('input', () => {
+      const isIdValid = /^\d{1,2}-\d+-\d{1,2}$/.test(transactionId.value.trim());
       document.getElementById('idError').style.display = (transactionId.value !== "" && !isIdValid) ? 'block' : 'none';
       next2Btn.disabled = !isIdValid;
-    };
-    transactionId.addEventListener('input', validateStep2);
+    });
 
     document.getElementById('back1').addEventListener('click', () => {
       step2.classList.remove('active');
@@ -281,18 +257,14 @@
       step3.classList.add('active');
     });
 
-    // --- Step 3 (型番入力・検索) ---
     const modelNumberInput = document.getElementById('modelNumber');
     const googleSearchBtn = document.getElementById('googleSearchBtn');
-    
     modelNumberInput.addEventListener('input', () => {
       googleSearchBtn.disabled = modelNumberInput.value.trim() === "";
     });
-
     googleSearchBtn.addEventListener('click', () => {
-      const query = modelNumberInput.value.trim();
-      if (query !== "") {
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+      if (modelNumberInput.value.trim() !== "") {
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(modelNumberInput.value.trim())}`, '_blank');
       }
     });
 
@@ -305,7 +277,6 @@
       step4.classList.add('active');
     });
 
-    // --- Step 4 (ブランド) ---
     const brandInput = document.getElementById('brand');
     const next4Btn = document.getElementById('next4');
     brandInput.addEventListener('input', () => {
@@ -319,56 +290,35 @@
     next4Btn.addEventListener('click', () => {
       step4.classList.remove('active');
       step5.classList.add('active');
-      
-      const selectedBrand = brandInput.value.trim();
-      const itemNameInput = document.getElementById('itemName');
-      
-      if (itemNameInput.value === "") {
-        itemNameInput.value = selectedBrand + " ";
+      if (document.getElementById('itemName').value === "") {
+        document.getElementById('itemName').value = brandInput.value.trim() + " ";
       }
-      itemNameInput.placeholder = `例: ${selectedBrand} x The Exorcist Flannel Shirt "Black × Blue"`;
+      document.getElementById('itemName').placeholder = `例: ${brandInput.value.trim()} x The Exorcist Flannel Shirt "Black"`;
       validateStep5();
     });
 
-    // --- Step 5 (商品名 + 翻訳 + カラー囲み) ---
     const itemNameInput = document.getElementById('itemName');
     const next5Btn = document.getElementById('next5');
     const translateMsg = document.getElementById('translateMsg');
     let typingTimer;
-
-    const colorList = [
-      "black", "white", "red", "blue", "green", "yellow", "orange", "purple", 
-      "pink", "brown", "grey", "gray", "navy", "olive", "beige", "silver", 
-      "gold", "khaki", "burgundy", "charcoal", "ivory", "cream", "multi", "multicolor"
-    ];
-
+    const colorList = ["black","white","red","blue","green","yellow","orange","purple","pink","brown","grey","gray","navy","olive","beige","silver","gold","khaki","burgundy","charcoal","ivory","cream","multi","multicolor"];
     const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 
     const formatColor = (text) => {
       if (!text) return text;
       const trimmed = text.trim();
       if (trimmed.endsWith('"') || trimmed.endsWith('”') || trimmed.endsWith("'")) return text; 
-
       const words = trimmed.split(' ');
       if (words.length < 1) return text;
-
       const lastWord = words[words.length - 1];
-      const cleanLast = lastWord.replace(/[^a-zA-Z]/g, '').toLowerCase();
-      const isLastColor = colorList.includes(cleanLast);
-
+      const isLastColor = colorList.includes(lastWord.replace(/[^a-zA-Z]/g, '').toLowerCase());
       if (words.length >= 2) {
-        const secondLastWord = words[words.length - 2];
-        const cleanSecondLast = secondLastWord.replace(/[^a-zA-Z]/g, '').toLowerCase();
-        const isSecondLastColor = colorList.includes(cleanSecondLast);
-
+        const isSecondLastColor = colorList.includes(words[words.length - 2].replace(/[^a-zA-Z]/g, '').toLowerCase());
         if (isLastColor && isSecondLastColor) {
-          const color1 = capitalize(cleanSecondLast);
-          const color2 = capitalize(cleanLast);
-          words.splice(words.length - 2, 2, `"${color1} × ${color2}"`);
+          words.splice(words.length - 2, 2, `"${capitalize(words[words.length - 2].replace(/[^a-zA-Z]/g, ''))} × ${capitalize(lastWord.replace(/[^a-zA-Z]/g, ''))}"`);
           return words.join(' ') + (text.endsWith(' ') ? ' ' : '');
         }
       }
-      
       if (isLastColor) {
         words[words.length - 1] = `"${lastWord}"`;
         return words.join(' ') + (text.endsWith(' ') ? ' ' : '');
@@ -377,9 +327,7 @@
     };
     
     const validateStep5 = () => {
-      const selectedBrand = brandInput.value.trim();
-      const currentItemName = itemNameInput.value.trim();
-      next5Btn.disabled = (currentItemName === "" || currentItemName === selectedBrand);
+      next5Btn.disabled = (itemNameInput.value.trim() === "" || itemNameInput.value.trim() === brandInput.value.trim());
     };
 
     itemNameInput.addEventListener('input', () => {
@@ -387,32 +335,17 @@
       clearTimeout(typingTimer);
       typingTimer = setTimeout(async () => {
         const text = itemNameInput.value;
-        const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
-        
-        if (hasJapanese) {
-          translateMsg.style.display = 'block';
-          translateMsg.style.color = '#007bff';
-          translateMsg.textContent = '英語へ自動翻訳中...';
-          next5Btn.disabled = true;
-          
+        if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text)) {
+          translateMsg.style.display = 'block'; translateMsg.style.color = '#007bff'; translateMsg.textContent = '自動翻訳中...'; next5Btn.disabled = true;
           try {
             const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=ja|en`);
             const data = await res.json();
-            if (data.responseData && data.responseData.translatedText) {
-              itemNameInput.value = formatColor(data.responseData.translatedText);
-            }
-            translateMsg.style.color = '#28a745';
-            translateMsg.textContent = '✓ 翻訳完了';
+            if (data.responseData && data.responseData.translatedText) itemNameInput.value = formatColor(data.responseData.translatedText);
+            translateMsg.style.color = '#28a745'; translateMsg.textContent = '✓ 翻訳完了';
             setTimeout(() => { translateMsg.style.display = 'none'; }, 2000);
-          } catch (error) {
-            translateMsg.style.color = '#dc3545';
-            translateMsg.textContent = '翻訳エラー（手動で修正してください）';
-          }
+          } catch (error) { translateMsg.style.display = 'none'; }
         } else {
-          const formattedText = formatColor(text);
-          if (formattedText !== text) {
-            itemNameInput.value = formattedText;
-          }
+          itemNameInput.value = formatColor(text);
         }
         validateStep5();
       }, 800);
@@ -422,16 +355,13 @@
       step5.classList.remove('active');
       step4.classList.add('active');
     });
-
     next5Btn.addEventListener('click', () => {
       step5.classList.remove('active');
       step6.classList.add('active');
     });
 
-    // --- Step 6 (サイズ入力) ---
     const itemSizeInput = document.getElementById('itemSize');
     const next6Btn = document.getElementById('next6');
-
     itemSizeInput.addEventListener('input', () => {
       next6Btn.disabled = itemSizeInput.value.trim() === "";
     });
@@ -452,63 +382,39 @@
       const itemSize = document.getElementById('itemSize').value;
       const staff = document.getElementById('staff').value;
 
-      // ① M列〜Q列用データ (M:商品名, N:空, O:型番, P:空, Q:ブランド)
-      const data1 = [itemName, "", modelNumber, "", brand];
-      document.getElementById('resultData1').value = data1.join('\t');
-
-      // ② U列〜Y列用データ (U:サイズ, V:空, W:空, X:空, Y:担当者)
-      const data2 = [itemSize, "", "", "", staff];
-      document.getElementById('resultData2').value = data2.join('\t');
+      // M列〜Y列までを一気にまとめる配列 (全13列分)
+      // M:商品名, N:空, O:型番, P:空, Q:ブランド, R:空(上書き注意), S:空(上書き注意), T:空, U:サイズ, V:空, W:空, X:空, Y:担当者
+      const data = [
+        itemName, "", modelNumber, "", brand, "", "", "", itemSize, "", "", "", staff
+      ];
+      
+      document.getElementById('resultData').value = data.join('\t');
     });
 
-    // --- Step 7 (コピー処理 & リセット処理) ---
     document.getElementById('back6').addEventListener('click', () => {
       step7.classList.remove('active');
       step6.classList.add('active');
     });
 
-    // 最初からボタンの処理
     document.getElementById('resetBtn').addEventListener('click', () => {
-      // 画面をStep 1に戻す
       step7.classList.remove('active');
       step1.classList.add('active');
-      
-      // 入力値のリセット
-      transactionId.value = "";
-      modelNumberInput.value = "";
-      brandInput.value = "";
-      itemNameInput.value = "";
-      itemSizeInput.value = "";
-      
-      // ボタンとエラー表示の初期化
-      next2Btn.disabled = true;
-      googleSearchBtn.disabled = true;
-      next4Btn.disabled = true;
-      next5Btn.disabled = true;
-      next6Btn.disabled = true;
-      document.getElementById('idError').style.display = 'none';
-      translateMsg.style.display = 'none';
+      transactionId.value = ""; modelNumberInput.value = ""; brandInput.value = ""; itemNameInput.value = ""; itemSizeInput.value = "";
+      next2Btn.disabled = true; googleSearchBtn.disabled = true; next4Btn.disabled = true; next5Btn.disabled = true; next6Btn.disabled = true;
+      document.getElementById('idError').style.display = 'none'; translateMsg.style.display = 'none';
     });
 
-    const setupCopyBtn = (btnId, inputId) => {
-      const btn = document.getElementById(btnId);
-      btn.addEventListener('click', () => {
-        const textToCopy = document.getElementById(inputId).value;
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          btn.textContent = '✓ コピー済';
-          btn.style.backgroundColor = '#1e7e34';
-          setTimeout(() => {
-            btn.textContent = 'コピー';
-            btn.style.backgroundColor = '#28a745';
-          }, 2000);
-        }).catch(() => {
-          alert('コピーに失敗しました。');
-        });
-      });
-    };
-
-    setupCopyBtn('copyBtn1', 'resultData1');
-    setupCopyBtn('copyBtn2', 'resultData2');
+    const copyBtn = document.getElementById('copyBtn');
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(document.getElementById('resultData').value).then(() => {
+        copyBtn.textContent = '✓ コピー済';
+        copyBtn.style.backgroundColor = '#1e7e34';
+        setTimeout(() => {
+          copyBtn.textContent = '一括コピーする';
+          copyBtn.style.backgroundColor = '#28a745';
+        }, 2000);
+      }).catch(() => alert('コピーに失敗しました。'));
+    });
   </script>
 
 </body>
