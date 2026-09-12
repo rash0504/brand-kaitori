@@ -108,26 +108,26 @@
       </div>
     </div>
 
-    <!-- Step 2: ID入力 -->
+    <!-- Step 2: 型番入力（任意・大文字変換） -->
     <div id="step2" class="step">
-      <div class="form-group">
-        <label for="transactionId">取引ID</label>
-        <input type="text" id="transactionId" placeholder="例: 1-123456-1">
-        <div id="idError" class="error-text">形式が正しくありません (例: 1-123456-12)</div>
-      </div>
-      <div class="btn-group">
-        <button id="back1" class="btn-secondary">戻る</button>
-        <button id="next2" class="btn-primary" disabled>次へ</button>
-      </div>
-    </div>
-
-    <!-- Step 3: 型番入力（任意） -->
-    <div id="step3" class="step">
       <div class="form-group">
         <label for="modelNumber">型番 (任意)</label>
         <input type="text" id="modelNumber" placeholder="例: NP11834">
         <button id="googleSearchBtn" class="btn-google" disabled>Googleで検索する</button>
-        <div class="hint-text">※型番を入力して検索ボタンを押すと、別タブでGoogle検索が開きます。</div>
+        <div class="hint-text">※入力しなくても「次へ」進めます。小文字で入力しても自動で大文字になります。</div>
+      </div>
+      <div class="btn-group">
+        <button id="back1" class="btn-secondary">戻る</button>
+        <button id="next2" class="btn-primary">次へ</button>
+      </div>
+    </div>
+
+    <!-- Step 3: ID入力（任意） -->
+    <div id="step3" class="step">
+      <div class="form-group">
+        <label for="itemId">ID (任意)</label>
+        <input type="text" id="itemId" placeholder="例: 123456">
+        <div class="hint-text">※入力しなくても「次へ」進めます。</div>
       </div>
       <div class="btn-group">
         <button id="back2" class="btn-secondary">戻る</button>
@@ -154,6 +154,7 @@
         <label for="itemName">商品名</label>
         <input type="text" id="itemName" placeholder="例: Supreme x The Exorcist Flannel Shirt &quot;Black × Blue&quot;">
         <div id="translateMsg" class="success-text"></div>
+        <div class="hint-text">※必ず ブランド名 商品名 "カラー" の順にしてください</div>
       </div>
       <div class="btn-group">
         <button id="back4" class="btn-secondary">戻る</button>
@@ -161,29 +162,65 @@
       </div>
     </div>
 
-    <!-- Step 6: サイズ入力 -->
+    <!-- Step 6: サイズ入力 (大文字変換) -->
     <div id="step6" class="step">
       <div class="form-group">
         <label for="itemSize">サイズ</label>
         <input type="text" id="itemSize" placeholder="例: M, L, 42, US8">
+        <div class="hint-text">※小文字で入力しても自動で大文字になります。</div>
       </div>
       <div class="btn-group">
         <button id="back5" class="btn-secondary">戻る</button>
-        <button id="next6" class="btn-primary" disabled>完了してコピー</button>
+        <button id="next6" class="btn-primary" disabled>次へ</button>
       </div>
     </div>
 
-    <!-- Step 7: コピー画面（一括化） -->
+    <!-- Step 7: 商品状態選択 -->
     <div id="step7" class="step">
+      <div class="form-group">
+        <label for="itemCondition">商品状態</label>
+        <select id="itemCondition">
+          <option value="">選択してください</option>
+          <option value="新品・未使用">新品・未使用</option>
+          <option value="新品・未使用（ワケあり）">新品・未使用（ワケあり）</option>
+          <option value="未使用に近い">未使用に近い</option>
+          <option value="目立った傷や汚れなし">目立った傷や汚れなし</option>
+          <option value="やや傷や汚れあり">やや傷や汚れあり</option>
+          <option value="傷や汚れあり">傷や汚れあり</option>
+          <option value="全体的に状態が悪い">全体的に状態が悪い</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button id="back6" class="btn-secondary">戻る</button>
+        <button id="next7" class="btn-primary" disabled>次へ</button>
+      </div>
+    </div>
+
+    <!-- Step 8: 付属品入力（任意） -->
+    <div id="step8" class="step">
+      <div class="form-group">
+        <label for="itemAccessories">付属品 (任意)</label>
+        <input type="text" id="itemAccessories" placeholder="例: 箱、タグ、保存袋">
+        <div class="hint-text">※入力しなくても「完了」へ進めます。</div>
+      </div>
+      <div class="btn-group">
+        <button id="back7" class="btn-secondary">戻る</button>
+        <button id="next8" class="btn-primary">完了してコピー</button>
+      </div>
+    </div>
+
+    <!-- Step 9: コピー画面（一括化） -->
+    <div id="step9" class="step">
       
       <div class="form-group">
         <label>スプレッドシート用データ (一括)</label>
         <textarea id="resultData" rows="2" readonly></textarea>
         <div class="hint-text" style="color: #dc3545; font-weight: bold; margin-top: 10px;">
-          ※注意: 一括ペーストするとR列・S列の関数が空白で上書きされ消えてしまいます。スプレッドシート側の関数設定を「ARRAYFORMULA」にするか、関数の列を移動させる必要があります。
+          ※注意: 一括ペーストするとR列・S列の関数が空白で上書きされ消えてしまいます。
         </div>
         <div class="hint-text" style="margin-top: 5px;">
-          スプレッドシートの <b>M列</b> のセルを選択して貼り付けてください。
+          スプレッドシートの <b>M列</b> のセルを選択して貼り付けてください。<br>
+          （M:商品名, N:ID, O:型番, Q:ブランド, U:サイズ, V:状態, W:付属品, Y:担当者）
         </div>
       </div>
 
@@ -192,7 +229,7 @@
       </div>
       
       <div class="btn-group" style="margin-top: 15px;">
-        <button id="back6" class="btn-secondary">戻る</button>
+        <button id="back8" class="btn-secondary">戻る</button>
         <button id="resetBtn" class="btn-warning">最初から</button>
       </div>
     </div>
@@ -200,6 +237,7 @@
   </div>
 
   <script>
+    // --- ブランドリストの準備 ---
     const rawBrands = [
       "A.PRESSE", "AMI PARIS", "ANCELLM", "AURALEE", "BLACK COMME des GARCONS", "BODE", "CELINE", "COMME des GARCONS HOMME", 
       "COMME des GARCONS HOMME Deux", "COMME des GARCONS HOMME PLUS", "COMME des GARCONS SHIRT", "DIOR", "DRIES VAN NOTEN", 
@@ -227,76 +265,55 @@
       datalist.appendChild(option);
     });
 
-    const step1 = document.getElementById('step1');
-    const step2 = document.getElementById('step2');
-    const step3 = document.getElementById('step3');
-    const step4 = document.getElementById('step4');
-    const step5 = document.getElementById('step5');
-    const step6 = document.getElementById('step6');
-    const step7 = document.getElementById('step7');
+    // 画面遷移関数
+    const switchStep = (from, to) => {
+      document.getElementById(from).classList.remove('active');
+      document.getElementById(to).classList.add('active');
+    };
 
-    document.getElementById('next1').addEventListener('click', () => {
-      step1.classList.remove('active');
-      step2.classList.add('active');
-    });
+    // --- Step 1 (担当者) ---
+    document.getElementById('next1').addEventListener('click', () => switchStep('step1', 'step2'));
 
-    const transactionId = document.getElementById('transactionId');
-    const next2Btn = document.getElementById('next2');
-    transactionId.addEventListener('input', () => {
-      const isIdValid = /^\d{1,2}-\d+-\d{1,2}$/.test(transactionId.value.trim());
-      document.getElementById('idError').style.display = (transactionId.value !== "" && !isIdValid) ? 'block' : 'none';
-      next2Btn.disabled = !isIdValid;
-    });
-
-    document.getElementById('back1').addEventListener('click', () => {
-      step2.classList.remove('active');
-      step1.classList.add('active');
-    });
-    next2Btn.addEventListener('click', () => {
-      step2.classList.remove('active');
-      step3.classList.add('active');
-    });
-
+    // --- Step 2 (型番) 大文字変換＆検索 ---
     const modelNumberInput = document.getElementById('modelNumber');
     const googleSearchBtn = document.getElementById('googleSearchBtn');
-    modelNumberInput.addEventListener('input', () => {
-      googleSearchBtn.disabled = modelNumberInput.value.trim() === "";
+    modelNumberInput.addEventListener('input', function() {
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.toUpperCase();
+      this.setSelectionRange(start, end);
+      
+      googleSearchBtn.disabled = this.value.trim() === "";
     });
     googleSearchBtn.addEventListener('click', () => {
       if (modelNumberInput.value.trim() !== "") {
         window.open(`https://www.google.com/search?q=${encodeURIComponent(modelNumberInput.value.trim())}`, '_blank');
       }
     });
+    document.getElementById('back1').addEventListener('click', () => switchStep('step2', 'step1'));
+    document.getElementById('next2').addEventListener('click', () => switchStep('step2', 'step3'));
 
-    document.getElementById('back2').addEventListener('click', () => {
-      step3.classList.remove('active');
-      step2.classList.add('active');
-    });
-    document.getElementById('next3').addEventListener('click', () => {
-      step3.classList.remove('active');
-      step4.classList.add('active');
-    });
+    // --- Step 3 (ID) ---
+    document.getElementById('back2').addEventListener('click', () => switchStep('step3', 'step2'));
+    document.getElementById('next3').addEventListener('click', () => switchStep('step3', 'step4'));
 
+    // --- Step 4 (ブランド) ---
     const brandInput = document.getElementById('brand');
     const next4Btn = document.getElementById('next4');
     brandInput.addEventListener('input', () => {
       next4Btn.disabled = brandInput.value.trim() === "";
     });
-
-    document.getElementById('back3').addEventListener('click', () => {
-      step4.classList.remove('active');
-      step3.classList.add('active');
-    });
+    document.getElementById('back3').addEventListener('click', () => switchStep('step4', 'step3'));
     next4Btn.addEventListener('click', () => {
-      step4.classList.remove('active');
-      step5.classList.add('active');
       if (document.getElementById('itemName').value === "") {
         document.getElementById('itemName').value = brandInput.value.trim() + " ";
       }
       document.getElementById('itemName').placeholder = `例: ${brandInput.value.trim()} x The Exorcist Flannel Shirt "Black"`;
       validateStep5();
+      switchStep('step4', 'step5');
     });
 
+    // --- Step 5 (商品名) ---
     const itemNameInput = document.getElementById('itemName');
     const next5Btn = document.getElementById('next5');
     const translateMsg = document.getElementById('translateMsg');
@@ -350,58 +367,80 @@
         validateStep5();
       }, 800);
     });
+    document.getElementById('back4').addEventListener('click', () => switchStep('step5', 'step4'));
+    next5Btn.addEventListener('click', () => switchStep('step5', 'step6'));
 
-    document.getElementById('back4').addEventListener('click', () => {
-      step5.classList.remove('active');
-      step4.classList.add('active');
-    });
-    next5Btn.addEventListener('click', () => {
-      step5.classList.remove('active');
-      step6.classList.add('active');
-    });
-
+    // --- Step 6 (サイズ) 大文字変換 ---
     const itemSizeInput = document.getElementById('itemSize');
     const next6Btn = document.getElementById('next6');
-    itemSizeInput.addEventListener('input', () => {
-      next6Btn.disabled = itemSizeInput.value.trim() === "";
-    });
+    itemSizeInput.addEventListener('input', function() {
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.toUpperCase();
+      this.setSelectionRange(start, end);
 
-    document.getElementById('back5').addEventListener('click', () => {
-      step6.classList.remove('active');
-      step5.classList.add('active');
+      next6Btn.disabled = this.value.trim() === "";
     });
+    document.getElementById('back5').addEventListener('click', () => switchStep('step6', 'step5'));
+    next6Btn.addEventListener('click', () => switchStep('step6', 'step7'));
 
-    // --- Step 6 -> 7 (データ成形と遷移) ---
-    next6Btn.addEventListener('click', () => {
-      step6.classList.remove('active');
-      step7.classList.add('active');
+    // --- Step 7 (商品状態) ---
+    const itemConditionSelect = document.getElementById('itemCondition');
+    const next7Btn = document.getElementById('next7');
+    itemConditionSelect.addEventListener('change', () => {
+      next7Btn.disabled = itemConditionSelect.value === "";
+    });
+    document.getElementById('back6').addEventListener('click', () => switchStep('step7', 'step6'));
+    next7Btn.addEventListener('click', () => switchStep('step7', 'step8'));
+
+    // --- Step 8 (付属品) ---
+    const itemAccessoriesInput = document.getElementById('itemAccessories');
+    document.getElementById('back7').addEventListener('click', () => switchStep('step8', 'step7'));
+    
+    // --- Step 8 -> 9 (データ成形と遷移) ---
+    document.getElementById('next8').addEventListener('click', () => {
+      switchStep('step8', 'step9');
       
       const itemName = document.getElementById('itemName').value;
+      const itemId = document.getElementById('itemId').value;
       const modelNumber = document.getElementById('modelNumber').value;
       const brand = document.getElementById('brand').value;
       const itemSize = document.getElementById('itemSize').value;
+      const itemCondition = document.getElementById('itemCondition').value;
+      const itemAccessories = document.getElementById('itemAccessories').value;
       const staff = document.getElementById('staff').value;
 
-      // M列〜Y列までを一気にまとめる配列 (全13列分)
-      // M:商品名, N:空, O:型番, P:空, Q:ブランド, R:空(上書き注意), S:空(上書き注意), T:空, U:サイズ, V:空, W:空, X:空, Y:担当者
+      // M列〜Y列までを一気にまとめる配列
+      // M:商品名, N:ID, O:型番, P:空, Q:ブランド, R:空, S:空, T:空, U:サイズ, V:状態, W:付属品, X:空, Y:担当者
       const data = [
-        itemName, "", modelNumber, "", brand, "", "", "", itemSize, "", "", "", staff
+        itemName, itemId, modelNumber, "", brand, "", "", "", itemSize, itemCondition, itemAccessories, "", staff
       ];
       
       document.getElementById('resultData').value = data.join('\t');
     });
 
-    document.getElementById('back6').addEventListener('click', () => {
-      step7.classList.remove('active');
-      step6.classList.add('active');
-    });
+    // --- Step 9 (コピー処理・リセット) ---
+    document.getElementById('back8').addEventListener('click', () => switchStep('step9', 'step8'));
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-      step7.classList.remove('active');
-      step1.classList.add('active');
-      transactionId.value = ""; modelNumberInput.value = ""; brandInput.value = ""; itemNameInput.value = ""; itemSizeInput.value = "";
-      next2Btn.disabled = true; googleSearchBtn.disabled = true; next4Btn.disabled = true; next5Btn.disabled = true; next6Btn.disabled = true;
-      document.getElementById('idError').style.display = 'none'; translateMsg.style.display = 'none';
+      switchStep('step9', 'step1');
+      
+      // 入力値のクリア
+      modelNumberInput.value = "";
+      document.getElementById('itemId').value = "";
+      brandInput.value = "";
+      itemNameInput.value = "";
+      itemSizeInput.value = "";
+      itemConditionSelect.value = "";
+      itemAccessoriesInput.value = "";
+      
+      // ボタンとエラー表示の初期化
+      googleSearchBtn.disabled = true;
+      next4Btn.disabled = true;
+      next5Btn.disabled = true;
+      next6Btn.disabled = true;
+      next7Btn.disabled = true;
+      translateMsg.style.display = 'none';
     });
 
     const copyBtn = document.getElementById('copyBtn');
@@ -415,6 +454,21 @@
         }, 2000);
       }).catch(() => alert('コピーに失敗しました。'));
     });
+
+    // --- Enterキーで「次へ」進む処理 ---
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const activeStep = document.querySelector('.step.active');
+        if (activeStep) {
+          const primaryBtn = activeStep.querySelector('.btn-primary');
+          if (primaryBtn && !primaryBtn.disabled) {
+            e.preventDefault();
+            primaryBtn.click();
+          }
+        }
+      }
+    });
+
   </script>
 
 </body>
