@@ -98,6 +98,7 @@
     .btn-secondary { background-color: #6c757d; }
     .btn-success { background-color: #28a745; transition: 0.2s; }
     .btn-warning { background-color: #ffc107; color: #212529; }
+    .btn-info { background-color: #17a2b8; color: #fff; }
     .btn-google { background-color: #4285F4; margin-top: 5px; }
     .btn-google:disabled { background-color: #a0c1f9; cursor: not-allowed; }
 
@@ -120,7 +121,7 @@
     <div id="step1" class="step active">
       <div class="form-group">
         <label for="staff">担当者</label>
-        <input type="text" id="staff" list="staffList" placeholder="担当者をリストから選択">
+        <input type="text" id="staff" list="staffList" placeholder="手入力またはリストから選択">
         <datalist id="staffList">
           <option value="松並 欣汰"></option>
           <option value="篠原 寿樹"></option>
@@ -136,6 +137,10 @@
       </div>
       <div class="btn-group">
         <button id="next1" class="btn-primary" disabled>次へ</button>
+      </div>
+      <!-- 復元ボタン（条件を満たした時のみ表示） -->
+      <div class="btn-group" id="restoreGroup" style="display: none; margin-top: 15px;">
+        <button id="restoreBtn" class="btn-info">直前に消したデータを復元 (6時間以内)</button>
       </div>
     </div>
 
@@ -271,7 +276,7 @@
           <option value="傷や汚れあり">傷や汚れあり</option>
           <option value="全体的に状態が悪い">全体的に状態が悪い</option>
         </select>
-        <div class="hint-text">※情報入力者のみの場合は入力不要です。</div>
+        <div class="hint-text">※担当者が「情報入力者」の場合は入力任意です。</div>
       </div>
       <div class="btn-group">
         <button id="back6" class="btn-secondary">戻る</button>
@@ -332,6 +337,55 @@
   </div>
 
   <script>
+    // --- バックアップ・復元管理 ---
+    const BACKUP_KEY = "apparel_backup_data";
+    const EXPIRATION_MS = 6 * 60 * 60 * 1000; // 6時間
+
+    const checkBackup = () => {
+      const backupStr = localStorage.getItem(BACKUP_KEY);
+      const restoreGroup = document.getElementById('restoreGroup');
+      if (backupStr) {
+        try {
+          const backupData = JSON.parse(backupStr);
+          const now = new Date().getTime();
+          // 6時間以内なら表示、過ぎていれば削除して非表示
+          if (now - backupData.timestamp <= EXPIRATION_MS) {
+            restoreGroup.style.display = 'flex';
+          } else {
+            localStorage.removeItem(BACKUP_KEY);
+            restoreGroup.style.display = 'none';
+          }
+        } catch (e) {
+          localStorage.removeItem(BACKUP_KEY);
+          restoreGroup.style.display = 'none';
+        }
+      } else {
+        restoreGroup.style.display = 'none';
+      }
+    };
+
+    // ページ読み込み時にバックアップがあるかチェック
+    window.addEventListener('DOMContentLoaded', checkBackup);
+
+    // 復元ボタンの動作
+    document.getElementById('restoreBtn').addEventListener('click', () => {
+      const backupStr = localStorage.getItem(BACKUP_KEY);
+      if (backupStr) {
+        const backupData = JSON.parse(backupStr);
+        accumulatedItems = backupData.accumulatedItems || [];
+        currentTxMiddle = backupData.currentTxMiddle || "";
+        document.getElementById('txCount').value = backupData.txCount || "";
+        document.getElementById('staff').value = backupData.staff || "";
+        
+        // スタッフ入力の反映
+        document.getElementById('next1').disabled = document.getElementById('staff').value.trim() === "";
+        
+        updateResultScreen();
+        switchStep('step1', 'step9');
+        alert('直前のデータを復元しました。');
+      }
+    });
+
     // --- 蓄積データ管理 ---
     let accumulatedItems = [];
     let currentTxMiddle = ""; // 取引IDの真ん中部分を記憶
@@ -791,19 +845,32 @@
       switchStep('step9', 'stepNote');
     });
 
-    // --- 全リセット処理 (確認アラート追加) ---
+    // --- 全リセット処理 (バックアップ作成) ---
     document.getElementById('resetBtn').addEventListener('click', () => {
       const isConfirmed = confirm("本当にすべて消して最初に戻って良いですか？\n※蓄積したデータはすべて失われます。");
       if (!isConfirmed) {
         return; 
       }
 
+      // バックアップの保存 (蓄積データが1件以上ある場合のみ保存)
+      if (accumulatedItems.length > 0) {
+        const backupData = {
+          timestamp: new Date().getTime(),
+          accumulatedItems: accumulatedItems,
+          currentTxMiddle: currentTxMiddle,
+          txCount: document.getElementById('txCount').value,
+          staff: document.getElementById('staff').value
+        };
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(backupData));
+      }
+
+      // --- リセット実行 ---
       accumulatedItems = [];
       currentTxMiddle = "";
       
-      document.getElementById('staff').value = ""; // 担当者もリセット
+      document.getElementById('staff').value = ""; 
       document.getElementById('txId').value = "";
-      document.getElementById('txCount').value = ""; // 件数も空にリセット
+      document.getElementById('txCount').value = ""; 
       document.getElementById('modelNumber').value = "";
       document.getElementById('itemId').value = "";
       document.getElementById('itemPage').value = "";
@@ -818,7 +885,7 @@
       document.getElementById('itemPageLinkPreview').style.display = 'none';
       document.getElementById('categoryAutoMsg').style.display = 'none';
 
-      document.getElementById('next1').disabled = true; // 担当者選択ボタンを無効化
+      document.getElementById('next1').disabled = true; 
       document.getElementById('nextTx').disabled = true;
       document.getElementById('googleSearchBtn').disabled = true;
       document.getElementById('nextUrl').disabled = true;
@@ -829,6 +896,7 @@
       document.getElementById('next7').disabled = true;
 
       switchStep('step9', 'step1');
+      checkBackup(); // 復元ボタンの表示を更新
     });
 
     const copyBtn = document.getElementById('copyBtn');
