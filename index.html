@@ -1,3 +1,14 @@
+ツールに簡易的なパスワード保護（パスワード：`0814`）を追加しました。
+
+ブラウザの「セッションストレージ」という機能を使用しているため、以下のような挙動になります。
+
+* **新しくタブやウィンドウを開いた時**には、必ずパスワード（0814）が要求されます。
+* 一度パスワードを入力すれば、**ページを再読み込み（リロード）したり、ツール内で「すべて消して最初から」を実行してもパスワードは聞かれません**。
+* ブラウザのタブを完全に閉じると、再度パスワードが必要になります。
+
+以下のコードをコピーして、`index.html` に上書き保存してください。
+
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -117,8 +128,20 @@
   <div class="container">
     <h2>買取情報入力</h2>
 
+    <!-- Step Login: パスワード入力 -->
+    <div id="stepLogin" class="step active">
+      <div class="form-group">
+        <label for="password">パスワード</label>
+        <input type="password" id="password" placeholder="4桁のパスワードを入力">
+        <div id="passwordError" class="error-text">パスワードが間違っています。</div>
+      </div>
+      <div class="btn-group">
+        <button id="loginBtn" class="btn-primary">ログイン</button>
+      </div>
+    </div>
+
     <!-- Step 1: 担当者選択 -->
-    <div id="step1" class="step active">
+    <div id="step1" class="step">
       <div class="form-group">
         <label for="staff">担当者</label>
         <input type="text" id="staff" list="staffList" placeholder="手入力またはリストから選択">
@@ -337,6 +360,37 @@
   </div>
 
   <script>
+    const switchStep = (from, to) => {
+      document.getElementById(from).classList.remove('active');
+      document.getElementById(to).classList.add('active');
+    };
+
+    // --- ログイン管理 ---
+    const checkLogin = () => {
+      if (sessionStorage.getItem('authenticated') === 'true') {
+        switchStep('stepLogin', 'step1');
+      }
+    };
+
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      const pwdInput = document.getElementById('password').value;
+      if (pwdInput === '0814') {
+        sessionStorage.setItem('authenticated', 'true');
+        document.getElementById('password').value = '';
+        document.getElementById('passwordError').style.display = 'none';
+        switchStep('stepLogin', 'step1');
+      } else {
+        document.getElementById('passwordError').style.display = 'block';
+      }
+    });
+
+    document.getElementById('password').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.stopPropagation(); // Enterダブルタップ処理との干渉を防ぐ
+        document.getElementById('loginBtn').click();
+      }
+    });
+
     // --- バックアップ・復元管理 ---
     const BACKUP_KEY = "apparel_backup_data";
     const EXPIRATION_MS = 6 * 60 * 60 * 1000; // 6時間
@@ -364,8 +418,11 @@
       }
     };
 
-    // ページ読み込み時にバックアップがあるかチェック
-    window.addEventListener('DOMContentLoaded', checkBackup);
+    // ページ読み込み時にログインとバックアップをチェック
+    window.addEventListener('DOMContentLoaded', () => {
+      checkLogin();
+      checkBackup();
+    });
 
     // 復元ボタンの動作
     document.getElementById('restoreBtn').addEventListener('click', () => {
@@ -417,11 +474,6 @@
       option.value = brand;
       datalist.appendChild(option);
     });
-
-    const switchStep = (from, to) => {
-      document.getElementById(from).classList.remove('active');
-      document.getElementById(to).classList.add('active');
-    };
 
     const getResolvedItemPage = () => {
       const itemIdValue = document.getElementById('itemId').value.trim();
@@ -937,3 +989,5 @@
 
 </body>
 </html>
+
+```
