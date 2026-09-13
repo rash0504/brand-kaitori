@@ -1,14 +1,3 @@
-ツールに簡易的なパスワード保護（パスワード：`0814`）を追加しました。
-
-ブラウザの「セッションストレージ」という機能を使用しているため、以下のような挙動になります。
-
-* **新しくタブやウィンドウを開いた時**には、必ずパスワード（0814）が要求されます。
-* 一度パスワードを入力すれば、**ページを再読み込み（リロード）したり、ツール内で「すべて消して最初から」を実行してもパスワードは聞かれません**。
-* ブラウザのタブを完全に閉じると、再度パスワードが必要になります。
-
-以下のコードをコピーして、`index.html` に上書き保存してください。
-
-```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -132,11 +121,12 @@
     <div id="stepLogin" class="step active">
       <div class="form-group">
         <label for="password">パスワード</label>
-        <input type="password" id="password" placeholder="4桁のパスワードを入力">
+        <!-- ブラウザの注意書きを出さないようにするための特殊な設定 -->
+        <input type="text" id="password" autocomplete="off" style="-webkit-text-security: disc;" inputmode="numeric">
         <div id="passwordError" class="error-text">パスワードが間違っています。</div>
       </div>
       <div class="btn-group">
-        <button id="loginBtn" class="btn-primary">ログイン</button>
+        <button id="loginBtn" class="btn-primary">次へ</button>
       </div>
     </div>
 
@@ -386,7 +376,7 @@
 
     document.getElementById('password').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        e.stopPropagation(); // Enterダブルタップ処理との干渉を防ぐ
+        e.stopPropagation(); 
         document.getElementById('loginBtn').click();
       }
     });
@@ -989,5 +979,3 @@
 
 </body>
 </html>
-
-```
