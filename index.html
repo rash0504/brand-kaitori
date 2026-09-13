@@ -146,8 +146,8 @@
         <div class="hint-text">※スプレッドシートには反映されません（データ蓄積と並び替え用）</div>
       </div>
       <div class="form-group">
-        <label for="txCount">入力予定の件数 (必須)</label>
-        <input type="number" id="txCount" value="1" min="1">
+        <label for="txCount">件数 (必須)</label>
+        <input type="number" id="txCount" min="1" placeholder="例: 3">
         <div class="hint-text">※ここで設定した件数までデータを蓄積できます</div>
       </div>
       <div class="btn-group">
@@ -162,7 +162,7 @@
         <label for="modelNumber">型番 (任意)</label>
         <input type="text" id="modelNumber" placeholder="例: NP11834">
         <button id="googleSearchBtn" class="btn-google" disabled>Googleで検索する</button>
-        <div class="hint-text">※入力しなくても「次へ」進めます。</div>
+        <div class="hint-text">※入力しなくても「次へ」進めます。小文字で入力しても自動で大文字になります。<br><b>【操作】次へ進むには Enter を素早く2回押すかボタンをクリック</b></div>
       </div>
       <div class="btn-group">
         <button id="back1" class="btn-secondary">戻る</button>
@@ -667,13 +667,29 @@
 
     // --- データ蓄積処理 ---
     const updateResultScreen = () => {
-      // 若い順（suffixの昇順）に並び替え
-      accumulatedItems.sort((a, b) => a.suffix - b.suffix);
-      
-      const tsvLines = accumulatedItems.map(item => item.tsvData.join('\t'));
-      document.getElementById('resultData').value = tsvLines.join('\n');
+      const expectedCount = parseInt(document.getElementById('txCount').value, 10) || 1;
 
-      const expectedCount = parseInt(document.getElementById('txCount').value, 10);
+      // 蓄積されたデータの中で最大のsuffixを取得
+      let maxSuffix = expectedCount;
+      accumulatedItems.forEach(item => {
+        if (item.suffix > maxSuffix) {
+          maxSuffix = item.suffix;
+        }
+      });
+
+      const tsvLines = [];
+      // 1 から maxSuffix までループし、抜け番は空行にする
+      for (let i = 1; i <= maxSuffix; i++) {
+        const foundItems = accumulatedItems.filter(item => item.suffix === i);
+        if (foundItems.length > 0) {
+          foundItems.forEach(item => tsvLines.push(item.tsvData.join('\t')));
+        } else {
+          // データがない番号は1行空ける（15列分の空データ）
+          tsvLines.push(new Array(15).fill("").join('\t'));
+        }
+      }
+
+      document.getElementById('resultData').value = tsvLines.join('\n');
       document.getElementById('progressMsg').textContent = `現在 ${accumulatedItems.length} / ${expectedCount} 件 蓄積済み`;
 
       if (accumulatedItems.length < expectedCount) {
@@ -769,7 +785,7 @@
       currentTxMiddle = "";
       
       document.getElementById('txId').value = "";
-      document.getElementById('txCount').value = "1";
+      document.getElementById('txCount').value = ""; // 件数も空にリセット
       document.getElementById('modelNumber').value = "";
       document.getElementById('itemId').value = "";
       document.getElementById('itemPage').value = "";
