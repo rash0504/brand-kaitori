@@ -684,8 +684,10 @@
         if (foundItems.length > 0) {
           foundItems.forEach(item => tsvLines.push(item.tsvData.join('\t')));
         } else {
-          // データがない番号は1行空ける（15列分の空データ）
-          tsvLines.push(new Array(15).fill("").join('\t'));
+          // データがない番号はK列に「査定待ち」を入れ、残りは空（15列分）
+          const emptyRow = new Array(15).fill("");
+          emptyRow[0] = "査定待ち"; // K列
+          tsvLines.push(emptyRow.join('\t'));
         }
       }
 
@@ -779,8 +781,13 @@
       switchStep('step9', 'stepNote');
     });
 
-    // --- 全リセット処理 ---
+    // --- 全リセット処理 (確認アラート追加) ---
     document.getElementById('resetBtn').addEventListener('click', () => {
+      const isConfirmed = confirm("本当にすべて消して最初に戻って良いですか？\n※蓄積したデータはすべて失われます。");
+      if (!isConfirmed) {
+        return; // キャンセルした場合は何もしない
+      }
+
       accumulatedItems = [];
       currentTxMiddle = "";
       
