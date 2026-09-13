@@ -187,13 +187,13 @@
     <!-- Step Url: 商品ページ入力（商品ID未入力時のみ表示） -->
     <div id="stepUrl" class="step">
       <div class="form-group">
-        <label for="itemPage">商品ページ (任意)</label>
+        <label for="itemPage">商品ページ (必須)</label>
         <input type="text" id="itemPage" placeholder="例: URLなどを入力">
-        <div class="hint-text">※入力しなくても「次へ」進めます。</div>
+        <div class="hint-text">※商品IDが未入力のため、商品ページの入力が必須となります。</div>
       </div>
       <div class="btn-group">
         <button id="backUrl" class="btn-secondary">戻る</button>
-        <button id="nextUrl" class="btn-primary">次へ</button>
+        <button id="nextUrl" class="btn-primary" disabled>次へ</button>
       </div>
     </div>
 
@@ -270,6 +270,7 @@
           <option value="傷や汚れあり">傷や汚れあり</option>
           <option value="全体的に状態が悪い">全体的に状態が悪い</option>
         </select>
+        <div class="hint-text">※担当者が「情報入力者」の場合は入力任意です。</div>
       </div>
       <div class="btn-group">
         <button id="back6" class="btn-secondary">戻る</button>
@@ -474,20 +475,29 @@
     document.getElementById('next2').addEventListener('click', () => switchStep('step2', 'step3'));
 
     // --- Step 3 (商品ID) ---
+    const itemPageInput = document.getElementById('itemPage');
+    const nextUrlBtn = document.getElementById('nextUrl');
+    
     document.getElementById('back2').addEventListener('click', () => switchStep('step3', 'step2'));
     document.getElementById('next3').addEventListener('click', () => {
       const itemIdValue = document.getElementById('itemId').value.trim();
       if (itemIdValue === "") {
+        // 商品IDがない場合は、商品ページの入力が必須になるためボタン状態を更新
+        nextUrlBtn.disabled = itemPageInput.value.trim() === "";
         switchStep('step3', 'stepUrl');
       } else {
-        document.getElementById('itemPage').value = "";
+        itemPageInput.value = "";
         switchStep('step3', 'step4');
       }
     });
 
     // --- Step Url (商品ページ入力) ---
+    itemPageInput.addEventListener('input', () => {
+      nextUrlBtn.disabled = itemPageInput.value.trim() === "";
+    });
+
     document.getElementById('backUrl').addEventListener('click', () => switchStep('stepUrl', 'step3'));
-    document.getElementById('nextUrl').addEventListener('click', () => switchStep('stepUrl', 'step4'));
+    nextUrlBtn.addEventListener('click', () => switchStep('stepUrl', 'step4'));
 
     // --- Step 4 (ブランド) ---
     const brandInput = document.getElementById('brand');
@@ -548,30 +558,6 @@
     const next5Btn = document.getElementById('next5');
     const translateMsg = document.getElementById('translateMsg');
     let typingTimer;
-    const colorList = ["black","white","red","blue","green","yellow","orange","purple","pink","brown","grey","gray","navy","olive","beige","silver","gold","khaki","burgundy","charcoal","ivory","cream","multi","multicolor"];
-    const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-
-    const formatColor = (text) => {
-      if (!text) return text;
-      const trimmed = text.trim();
-      if (trimmed.endsWith('"') || trimmed.endsWith('”') || trimmed.endsWith("'")) return text; 
-      const words = trimmed.split(' ');
-      if (words.length < 1) return text;
-      const lastWord = words[words.length - 1];
-      const isLastColor = colorList.includes(lastWord.replace(/[^a-zA-Z]/g, '').toLowerCase());
-      if (words.length >= 2) {
-        const isSecondLastColor = colorList.includes(words[words.length - 2].replace(/[^a-zA-Z]/g, '').toLowerCase());
-        if (isLastColor && isSecondLastColor) {
-          words.splice(words.length - 2, 2, `"${capitalize(words[words.length - 2].replace(/[^a-zA-Z]/g, ''))} × ${capitalize(lastWord.replace(/[^a-zA-Z]/g, ''))}"`);
-          return words.join(' ') + (text.endsWith(' ') ? ' ' : '');
-        }
-      }
-      if (isLastColor) {
-        words[words.length - 1] = `"${lastWord}"`;
-        return words.join(' ') + (text.endsWith(' ') ? ' ' : '');
-      }
-      return text;
-    };
     
     const validateStep5 = () => {
       const val = itemNameInput.value.trim();
@@ -646,14 +632,26 @@
       next6Btn.disabled = this.value.trim() === "";
     });
     document.getElementById('back5').addEventListener('click', () => switchStep('step6', 'stepCategory'));
-    next6Btn.addEventListener('click', () => switchStep('step6', 'step7'));
+    next6Btn.addEventListener('click', () => {
+      validateCondition(); // 商品状態画面に進む前にボタン状態を評価
+      switchStep('step6', 'step7');
+    });
 
     // --- Step 7 (商品状態) ---
     const itemConditionSelect = document.getElementById('itemCondition');
     const next7Btn = document.getElementById('next7');
-    itemConditionSelect.addEventListener('change', () => {
-      next7Btn.disabled = itemConditionSelect.value === "";
-    });
+    
+    const validateCondition = () => {
+      const staff = document.getElementById('staff').value;
+      if (staff === "情報入力者") {
+        // 情報入力者の場合は入力を必須としない
+        next7Btn.disabled = false;
+      } else {
+        next7Btn.disabled = itemConditionSelect.value === "";
+      }
+    };
+
+    itemConditionSelect.addEventListener('change', validateCondition);
     document.getElementById('back6').addEventListener('click', () => switchStep('step7', 'step6'));
     next7Btn.addEventListener('click', () => switchStep('step7', 'step8'));
 
@@ -725,7 +723,9 @@
       const itemAccessories = document.getElementById('itemAccessories').value;
       const itemNote = document.getElementById('itemNote').value;
       const selectedStaff = document.getElementById('staff').value;
+      
       const staffVal = (selectedStaff === "情報入力者") ? "" : selectedStaff;
+      const kStatus = (selectedStaff === "情報入力者") ? "査定待ち" : "検品Wチェック済";
 
       const resolvedItemPage = getResolvedItemPage();
       let adminUrl = "";
@@ -734,7 +734,7 @@
       }
 
       const dataArray = [
-        "検品Wチェック済", "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, itemNote, staffVal
+        kStatus, "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, itemNote, staffVal
       ];
 
       // 蓄積リストへ追加
@@ -765,6 +765,7 @@
       // ボタン無効化の初期化
       document.getElementById('nextTx').disabled = true;
       document.getElementById('googleSearchBtn').disabled = true;
+      document.getElementById('nextUrl').disabled = true;
       document.getElementById('next4').disabled = true;
       document.getElementById('next5').disabled = true;
       document.getElementById('nextCategory').disabled = true;
@@ -782,11 +783,11 @@
       switchStep('step9', 'stepNote');
     });
 
-    // --- 全リセット処理 (確認アラート追加) ---
+    // --- 全リセット処理 ---
     document.getElementById('resetBtn').addEventListener('click', () => {
       const isConfirmed = confirm("本当にすべて消して最初に戻って良いですか？\n※蓄積したデータはすべて失われます。");
       if (!isConfirmed) {
-        return; // キャンセルした場合は何もしない
+        return; 
       }
 
       accumulatedItems = [];
@@ -810,6 +811,7 @@
 
       document.getElementById('nextTx').disabled = true;
       document.getElementById('googleSearchBtn').disabled = true;
+      document.getElementById('nextUrl').disabled = true;
       document.getElementById('next4').disabled = true;
       document.getElementById('next5').disabled = true;
       document.getElementById('nextCategory').disabled = true;
