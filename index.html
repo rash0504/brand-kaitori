@@ -121,8 +121,7 @@
     <div id="stepLogin" class="step active">
       <div class="form-group">
         <label for="password">パスワード</label>
-        <!-- ブラウザの注意書きを出さないようにするための特殊な設定 -->
-        <input type="text" id="password" autocomplete="off" style="-webkit-text-security: disc;" inputmode="numeric">
+        <input type="text" id="password" placeholder="4桁のパスワードを入力" autocomplete="off" style="-webkit-text-security: disc;" inputmode="numeric">
         <div id="passwordError" class="error-text">パスワードが間違っています。</div>
       </div>
       <div class="btn-group">
@@ -151,7 +150,6 @@
       <div class="btn-group">
         <button id="next1" class="btn-primary" disabled>次へ</button>
       </div>
-      <!-- 復元ボタン（条件を満たした時のみ表示） -->
       <div class="btn-group" id="restoreGroup" style="display: none; margin-top: 15px;">
         <button id="restoreBtn" class="btn-info">直前に消したデータを復元 (6時間以内)</button>
       </div>
@@ -176,7 +174,7 @@
       </div>
     </div>
 
-    <!-- Step 2: 型番入力（任意・大文字変換） -->
+    <!-- Step 2: 型番入力 -->
     <div id="step2" class="step">
       <div class="form-group">
         <label for="modelNumber">型番 (任意)</label>
@@ -190,7 +188,7 @@
       </div>
     </div>
 
-    <!-- Step 3: 商品ID入力（任意） -->
+    <!-- Step 3: 商品ID入力 -->
     <div id="step3" class="step">
       <div class="form-group">
         <label for="itemId">商品ID (任意)</label>
@@ -203,7 +201,7 @@
       </div>
     </div>
 
-    <!-- Step Url: 商品ページ入力（商品ID未入力時のみ表示） -->
+    <!-- Step Url: 商品ページ入力 -->
     <div id="stepUrl" class="step">
       <div class="form-group">
         <label for="itemPage">商品ページ (必須)</label>
@@ -247,7 +245,7 @@
       </div>
     </div>
 
-    <!-- Step Category: カテゴリ選択・手入力 -->
+    <!-- Step Category: カテゴリ選択 -->
     <div id="stepCategory" class="step">
       <div class="form-group">
         <label for="itemCategory">カテゴリ</label>
@@ -383,7 +381,7 @@
 
     // --- バックアップ・復元管理 ---
     const BACKUP_KEY = "apparel_backup_data";
-    const EXPIRATION_MS = 6 * 60 * 60 * 1000; // 6時間
+    const EXPIRATION_MS = 6 * 60 * 60 * 1000; 
 
     const checkBackup = () => {
       const backupStr = localStorage.getItem(BACKUP_KEY);
@@ -392,7 +390,6 @@
         try {
           const backupData = JSON.parse(backupStr);
           const now = new Date().getTime();
-          // 6時間以内なら表示、過ぎていれば削除して非表示
           if (now - backupData.timestamp <= EXPIRATION_MS) {
             restoreGroup.style.display = 'flex';
           } else {
@@ -408,13 +405,11 @@
       }
     };
 
-    // ページ読み込み時にログインとバックアップをチェック
     window.addEventListener('DOMContentLoaded', () => {
       checkLogin();
       checkBackup();
     });
 
-    // 復元ボタンの動作
     document.getElementById('restoreBtn').addEventListener('click', () => {
       const backupStr = localStorage.getItem(BACKUP_KEY);
       if (backupStr) {
@@ -424,7 +419,6 @@
         document.getElementById('txCount').value = backupData.txCount || "";
         document.getElementById('staff').value = backupData.staff || "";
         
-        // スタッフ入力の反映
         document.getElementById('next1').disabled = document.getElementById('staff').value.trim() === "";
         
         updateResultScreen();
@@ -435,9 +429,8 @@
 
     // --- 蓄積データ管理 ---
     let accumulatedItems = [];
-    let currentTxMiddle = ""; // 取引IDの真ん中部分を記憶
+    let currentTxMiddle = ""; 
 
-    // --- ブランドリスト ---
     const rawBrands = [
       "A.PRESSE", "AMI PARIS", "ANCELLM", "AURALEE", "BLACK COMME des GARCONS", "BODE", "CELINE", "COMME des GARCONS HOMME", 
       "COMME des GARCONS HOMME Deux", "COMME des GARCONS HOMME PLUS", "COMME des GARCONS SHIRT", "DIOR", "DRIES VAN NOTEN", 
@@ -560,7 +553,7 @@
     document.getElementById('backTx').addEventListener('click', () => switchStep('stepTx', 'step1'));
     nextTxBtn.addEventListener('click', () => switchStep('stepTx', 'step2'));
 
-    // --- Step 2 (型番) 大文字変換＆検索 ---
+    // --- Step 2 (型番) ---
     const modelNumberInput = document.getElementById('modelNumber');
     const googleSearchBtn = document.getElementById('googleSearchBtn');
     modelNumberInput.addEventListener('input', function() {
@@ -586,7 +579,6 @@
     document.getElementById('next3').addEventListener('click', () => {
       const itemIdValue = document.getElementById('itemId').value.trim();
       if (itemIdValue === "") {
-        // 商品IDがない場合は、商品ページの入力が必須になるためボタン状態を更新
         nextUrlBtn.disabled = itemPageInput.value.trim() === "";
         switchStep('step3', 'stepUrl');
       } else {
@@ -625,7 +617,6 @@
       const currentValue = itemNameField.value;
       const itemIdVal = document.getElementById('itemId').value.trim();
 
-      // ID未入力の場合のみ、ブランド名を商品名に補完
       if (itemIdVal === "") {
         if (currentValue === "" || currentValue === previousBrand + " ") {
           itemNameField.value = currentBrand + " ";
@@ -737,7 +728,7 @@
     });
     document.getElementById('back5').addEventListener('click', () => switchStep('step6', 'stepCategory'));
     next6Btn.addEventListener('click', () => {
-      validateCondition(); // 商品状態画面に進む前にボタン状態を評価
+      validateCondition(); 
       switchStep('step6', 'step7');
     });
 
@@ -748,7 +739,6 @@
     const validateCondition = () => {
       const staff = document.getElementById('staff').value.trim();
       if (staff === "情報入力者") {
-        // 情報入力者の場合は入力を必須としない
         next7Btn.disabled = false;
       } else {
         next7Btn.disabled = itemConditionSelect.value === "";
@@ -772,7 +762,6 @@
     const updateResultScreen = () => {
       const expectedCount = parseInt(document.getElementById('txCount').value, 10) || 1;
 
-      // 蓄積されたデータの中で最大のsuffixを取得
       let maxSuffix = expectedCount;
       accumulatedItems.forEach(item => {
         if (item.suffix > maxSuffix) {
@@ -781,15 +770,13 @@
       });
 
       const tsvLines = [];
-      // 1 から maxSuffix までループし、抜け番は空行にする
       for (let i = 1; i <= maxSuffix; i++) {
         const foundItems = accumulatedItems.filter(item => item.suffix === i);
         if (foundItems.length > 0) {
           foundItems.forEach(item => tsvLines.push(item.tsvData.join('\t')));
         } else {
-          // データがない番号はK列に「査定待ち」を入れ、残りは空（15列分）
           const emptyRow = new Array(15).fill("");
-          emptyRow[0] = "査定待ち"; // K列
+          emptyRow[0] = "査定待ち"; 
           tsvLines.push(emptyRow.join('\t'));
         }
       }
@@ -805,13 +792,11 @@
     };
 
     document.getElementById('nextNote').addEventListener('click', () => {
-      // 取引IDからのパース
       const txIdVal = document.getElementById('txId').value.trim();
       const txParts = txIdVal.split('-');
       const middlePart = txParts[1];
       const suffixNum = parseInt(txParts[2], 10);
 
-      // ランダム（真ん中）の数字が変わっていれば、別の取引と判定してリストをリセット
       if (currentTxMiddle !== "" && currentTxMiddle !== middlePart) {
         accumulatedItems = [];
       }
@@ -841,16 +826,14 @@
         kStatus, "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, itemNote, staffVal
       ];
 
-      // 蓄積リストへ追加
       accumulatedItems.push({ suffix: suffixNum, tsvData: dataArray });
 
       updateResultScreen();
       switchStep('stepNote', 'step9');
     });
 
-    // --- 次の商品を追加（ループ処理） ---
+    // --- 次の商品を追加 ---
     document.getElementById('continueBtn').addEventListener('click', () => {
-      // 入力フィールドのクリア (スタッフと件数は保持)
       document.getElementById('txId').value = "";
       document.getElementById('modelNumber').value = "";
       document.getElementById('itemId').value = "";
@@ -866,7 +849,6 @@
       document.getElementById('itemPageLinkPreview').style.display = 'none';
       document.getElementById('categoryAutoMsg').style.display = 'none';
 
-      // ボタン無効化の初期化
       document.getElementById('nextTx').disabled = true;
       document.getElementById('googleSearchBtn').disabled = true;
       document.getElementById('nextUrl').disabled = true;
@@ -881,7 +863,6 @@
 
     // --- コピー画面での「戻る」処理 ---
     document.getElementById('back8').addEventListener('click', () => {
-      // リストに加えた最後の1件を取り消す
       accumulatedItems.pop();
       if (accumulatedItems.length === 0) currentTxMiddle = "";
       switchStep('step9', 'stepNote');
@@ -894,7 +875,6 @@
         return; 
       }
 
-      // バックアップの保存 (蓄積データが1件以上ある場合のみ保存)
       if (accumulatedItems.length > 0) {
         const backupData = {
           timestamp: new Date().getTime(),
@@ -906,7 +886,6 @@
         localStorage.setItem(BACKUP_KEY, JSON.stringify(backupData));
       }
 
-      // --- リセット実行 ---
       accumulatedItems = [];
       currentTxMiddle = "";
       
@@ -938,7 +917,7 @@
       document.getElementById('next7').disabled = true;
 
       switchStep('step9', 'step1');
-      checkBackup(); // 復元ボタンの表示を更新
+      checkBackup(); 
     });
 
     const copyBtn = document.getElementById('copyBtn');
