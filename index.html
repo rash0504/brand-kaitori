@@ -120,21 +120,22 @@
     <div id="step1" class="step active">
       <div class="form-group">
         <label for="staff">担当者</label>
-        <select id="staff">
-          <option value="松並 欣汰" selected>松並 欣汰</option>
-          <option value="篠原 寿樹">篠原 寿樹</option>
-          <option value="椎名 葵">椎名 葵</option>
-          <option value="遠藤 わかな">遠藤 わかな</option>
-          <option value="市田 竜浩">市田 竜浩</option>
-          <option value="川田 俊">川田 俊</option>
-          <option value="市毛 怜隆">市毛 怜隆</option>
-          <option value="渡瀬 可威">渡瀬 可威</option>
-          <option value="情報入力者">情報入力者</option>
-        </select>
-        <div class="hint-text">※「情報入力者」を選択した場合、Y列（担当者欄）には何も反映されません</div>
+        <input type="text" id="staff" list="staffList" placeholder="手入力またはリストから選択">
+        <datalist id="staffList">
+          <option value="松並 欣汰"></option>
+          <option value="篠原 寿樹"></option>
+          <option value="椎名 葵"></option>
+          <option value="遠藤 わかな"></option>
+          <option value="市田 竜浩"></option>
+          <option value="川田 俊"></option>
+          <option value="市毛 怜隆"></option>
+          <option value="渡瀬 可威"></option>
+          <option value="情報入力者"></option>
+        </datalist>
+        <div class="hint-text">※「情報入力者」を選択（入力）した場合、Y列（担当者欄）には何も反映されません</div>
       </div>
       <div class="btn-group">
-        <button id="next1" class="btn-primary">次へ</button>
+        <button id="next1" class="btn-primary" disabled>次へ</button>
       </div>
     </div>
 
@@ -438,7 +439,14 @@
     };
 
     // --- Step 1 (担当者) ---
-    document.getElementById('next1').addEventListener('click', () => switchStep('step1', 'stepTx'));
+    const staffInput = document.getElementById('staff');
+    const next1Btn = document.getElementById('next1');
+
+    staffInput.addEventListener('input', () => {
+      next1Btn.disabled = staffInput.value.trim() === "";
+    });
+
+    next1Btn.addEventListener('click', () => switchStep('step1', 'stepTx'));
 
     // --- Step Tx (取引IDと件数) ---
     const txIdInput = document.getElementById('txId');
@@ -642,7 +650,7 @@
     const next7Btn = document.getElementById('next7');
     
     const validateCondition = () => {
-      const staff = document.getElementById('staff').value;
+      const staff = document.getElementById('staff').value.trim();
       if (staff === "情報入力者") {
         // 情報入力者の場合は入力を必須としない
         next7Btn.disabled = false;
@@ -722,7 +730,7 @@
       const itemCondition = document.getElementById('itemCondition').value;
       const itemAccessories = document.getElementById('itemAccessories').value;
       const itemNote = document.getElementById('itemNote').value;
-      const selectedStaff = document.getElementById('staff').value;
+      const selectedStaff = document.getElementById('staff').value.trim();
       
       const staffVal = (selectedStaff === "情報入力者") ? "" : selectedStaff;
       const kStatus = (selectedStaff === "情報入力者") ? "査定待ち" : "検品Wチェック済";
@@ -783,7 +791,7 @@
       switchStep('step9', 'stepNote');
     });
 
-    // --- 全リセット処理 ---
+    // --- 全リセット処理 (確認アラート追加) ---
     document.getElementById('resetBtn').addEventListener('click', () => {
       const isConfirmed = confirm("本当にすべて消して最初に戻って良いですか？\n※蓄積したデータはすべて失われます。");
       if (!isConfirmed) {
@@ -793,6 +801,7 @@
       accumulatedItems = [];
       currentTxMiddle = "";
       
+      document.getElementById('staff').value = ""; // 担当者もリセット
       document.getElementById('txId').value = "";
       document.getElementById('txCount').value = ""; // 件数も空にリセット
       document.getElementById('modelNumber').value = "";
@@ -809,6 +818,7 @@
       document.getElementById('itemPageLinkPreview').style.display = 'none';
       document.getElementById('categoryAutoMsg').style.display = 'none';
 
+      document.getElementById('next1').disabled = true; // 担当者選択ボタンを無効化
       document.getElementById('nextTx').disabled = true;
       document.getElementById('googleSearchBtn').disabled = true;
       document.getElementById('nextUrl').disabled = true;
