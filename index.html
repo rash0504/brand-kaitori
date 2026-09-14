@@ -368,7 +368,7 @@
 
     document.getElementById('loginBtn').addEventListener('click', () => {
       const pwdInput = document.getElementById('password').value;
-      if (pwdInput === '1029') {
+      if (pwdInput === '1024') {
         sessionStorage.setItem('authenticated', 'true');
         document.getElementById('password').value = '';
         document.getElementById('passwordError').style.display = 'none';
@@ -385,9 +385,27 @@
       }
     });
 
+    // --- 蓄積データ管理 ---
+    let accumulatedItems = [];
+    let currentTxMiddle = ""; 
+
     // --- バックアップ・復元管理 ---
     const BACKUP_KEY = "apparel_backup_data";
     const EXPIRATION_MS = 6 * 60 * 60 * 1000; 
+
+    // ★ データが更新されるたびに自動保存する処理
+    const saveCurrentDataToBackup = () => {
+      if (accumulatedItems.length > 0) {
+        const backupData = {
+          timestamp: new Date().getTime(),
+          accumulatedItems: accumulatedItems,
+          currentTxMiddle: currentTxMiddle,
+          txCount: document.getElementById('txCount').value,
+          staff: document.getElementById('staff').value
+        };
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(backupData));
+      }
+    };
 
     const checkBackup = () => {
       const backupStr = localStorage.getItem(BACKUP_KEY);
@@ -432,10 +450,6 @@
         alert('直前のデータを復元しました。');
       }
     });
-
-    // --- 蓄積データ管理 ---
-    let accumulatedItems = [];
-    let currentTxMiddle = ""; 
 
     const rawBrands = [
       "A.PRESSE", "AMI PARIS", "ANCELLM", "AURALEE", "BLACK COMME des GARCONS", "BODE", "CELINE", "COMME des GARCONS HOMME", 
@@ -730,7 +744,6 @@
         if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text)) {
           translateMsg.style.display = 'block'; translateMsg.style.color = '#007bff'; translateMsg.textContent = '自動翻訳中...'; next5Btn.disabled = true;
           try {
-            // Google Translate API を使用 (MyMemoryの制限回避)
             const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=en&dt=t&q=${encodeURIComponent(text.trim())}`);
             const data = await res.json();
             let translatedText = "";
@@ -896,6 +909,9 @@
 
       accumulatedItems.push({ suffix: suffixNum, tsvData: dataArray });
 
+      // ★追加: リストに追加されたタイミングでバックアップを保存
+      saveCurrentDataToBackup();
+
       updateResultScreen();
       switchStep('stepNote', 'step9');
     });
@@ -933,6 +949,10 @@
     document.getElementById('back8').addEventListener('click', () => {
       accumulatedItems.pop();
       if (accumulatedItems.length === 0) currentTxMiddle = "";
+      
+      // ★追加: 戻った（削除した）タイミングでもバックアップを更新
+      if (accumulatedItems.length > 0) saveCurrentDataToBackup();
+
       switchStep('step9', 'stepNote');
     });
 
@@ -943,16 +963,8 @@
         return; 
       }
 
-      if (accumulatedItems.length > 0) {
-        const backupData = {
-          timestamp: new Date().getTime(),
-          accumulatedItems: accumulatedItems,
-          currentTxMiddle: currentTxMiddle,
-          txCount: document.getElementById('txCount').value,
-          staff: document.getElementById('staff').value
-        };
-        localStorage.setItem(BACKUP_KEY, JSON.stringify(backupData));
-      }
+      // ★念のためリセット直前にも保存
+      saveCurrentDataToBackup();
 
       accumulatedItems = [];
       currentTxMiddle = "";
