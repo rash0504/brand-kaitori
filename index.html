@@ -156,8 +156,11 @@
       <div class="btn-group">
         <button id="next1" class="btn-primary" disabled>次へ</button>
       </div>
-      <div class="btn-group" id="restoreGroup" style="display: none; margin-top: 15px;">
-        <button id="restoreBtn" class="btn-info">直前に消したデータを復元 (6時間以内)</button>
+      
+      <!-- ★復元ボタンリスト（複数表示用） -->
+      <div id="restoreGroup" style="display: none; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #ccc;">
+        <label style="color: #17a2b8; margin-bottom: 10px;">🔄 自動保存データ (6時間以内)</label>
+        <div id="restoreList" style="display: flex; flex-direction: column; gap: 10px;"></div>
       </div>
     </div>
 
@@ -389,41 +392,74 @@
     let accumulatedItems = [];
     let currentTxMiddle = ""; 
 
-    // --- バックアップ・復元管理 ---
-    const BACKUP_KEY = "apparel_backup_data";
+    // --- バックアップ・復元管理 (複数データ対応) ---
+    const BACKUP_KEY = "apparel_backup_data_v2"; // キーを変更して安全に移行
     const EXPIRATION_MS = 6 * 60 * 60 * 1000; 
 
-    // ★ データが更新されるたびに自動保存する処理
     const saveCurrentDataToBackup = () => {
-      if (accumulatedItems.length > 0) {
+      if (accumulatedItems.length > 0 && currentTxMiddle !== "") {
+        let backups = JSON.parse(localStorage.getItem(BACKUP_KEY)) || [];
+        const now = new Date().getTime();
+        
+        // 6時間経過した古いデータを削除
+        backups = backups.filter(b => now - b.timestamp <= EXPIRATION_MS);
+
+        const existingIndex = backups.findIndex(b => b.currentTxMiddle === currentTxMiddle);
         const backupData = {
-          timestamp: new Date().getTime(),
+          timestamp: now,
           accumulatedItems: accumulatedItems,
           currentTxMiddle: currentTxMiddle,
           txCount: document.getElementById('txCount').value,
-          staff: document.getElementById('staff').value
+          staff: document.getElementById('staff').value,
+          timeStr: new Date(now).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
         };
-        localStorage.setItem(BACKUP_KEY, JSON.stringify(backupData));
+
+        if (existingIndex >= 0) {
+          backups[existingIndex] = backupData;
+        } else {
+          backups.push(backupData);
+        }
+
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(backups));
       }
     };
 
     const checkBackup = () => {
-      const backupStr = localStorage.getItem(BACKUP_KEY);
+      let backups = JSON.parse(localStorage.getItem(BACKUP_KEY)) || [];
+      const now = new Date().getTime();
+      backups = backups.filter(b => now - b.timestamp <= EXPIRATION_MS);
+      localStorage.setItem(BACKUP_KEY, JSON.stringify(backups));
+
       const restoreGroup = document.getElementById('restoreGroup');
-      if (backupStr) {
-        try {
-          const backupData = JSON.parse(backupStr);
-          const now = new Date().getTime();
-          if (now - backupData.timestamp <= EXPIRATION_MS) {
-            restoreGroup.style.display = 'flex';
-          } else {
-            localStorage.removeItem(BACKUP_KEY);
-            restoreGroup.style.display = 'none';
-          }
-        } catch (e) {
-          localStorage.removeItem(BACKUP_KEY);
-          restoreGroup.style.display = 'none';
-        }
+      const restoreList = document.getElementById('restoreList');
+      restoreList.innerHTML = '';
+
+      if (backups.length > 0) {
+        // 新しい順に並び替え
+        backups.sort((a, b) => b.timestamp - a.timestamp);
+
+        backups.forEach(b => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-info';
+          btn.style.fontSize = '0.9rem';
+          btn.style.padding = '10px';
+          btn.style.textAlign = 'left';
+          btn.textContent = `⏱ ${b.timeStr} ｜ ID: ***-${b.currentTxMiddle}-*** (${b.accumulatedItems.length}件 蓄積)`;
+          btn.onclick = () => {
+            accumulatedItems = b.accumulatedItems || [];
+            currentTxMiddle = b.currentTxMiddle || "";
+            document.getElementById('txCount').value = b.txCount || "";
+            document.getElementById('staff').value = b.staff || "";
+            
+            document.getElementById('next1').disabled = document.getElementById('staff').value.trim() === "";
+            
+            updateResultScreen();
+            switchStep('step1', 'step9');
+            alert(`取引ID「***-${b.currentTxMiddle}-***」のデータを復元しました。`);
+          };
+          restoreList.appendChild(btn);
+        });
+        restoreGroup.style.display = 'block';
       } else {
         restoreGroup.style.display = 'none';
       }
@@ -432,23 +468,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       checkLogin();
       checkBackup();
-    });
-
-    document.getElementById('restoreBtn').addEventListener('click', () => {
-      const backupStr = localStorage.getItem(BACKUP_KEY);
-      if (backupStr) {
-        const backupData = JSON.parse(backupStr);
-        accumulatedItems = backupData.accumulatedItems || [];
-        currentTxMiddle = backupData.currentTxMiddle || "";
-        document.getElementById('txCount').value = backupData.txCount || "";
-        document.getElementById('staff').value = backupData.staff || "";
-        
-        document.getElementById('next1').disabled = document.getElementById('staff').value.trim() === "";
-        
-        updateResultScreen();
-        switchStep('step1', 'step9');
-        alert('直前のデータを復元しました。');
-      }
     });
 
     const rawBrands = [
@@ -909,7 +928,7 @@
 
       accumulatedItems.push({ suffix: suffixNum, tsvData: dataArray });
 
-      // ★追加: リストに追加されたタイミングでバックアップを保存
+      // リストに追加されたタイミングでバックアップを保存
       saveCurrentDataToBackup();
 
       updateResultScreen();
@@ -950,20 +969,20 @@
       accumulatedItems.pop();
       if (accumulatedItems.length === 0) currentTxMiddle = "";
       
-      // ★追加: 戻った（削除した）タイミングでもバックアップを更新
+      // 戻った（削除した）タイミングでもバックアップを更新
       if (accumulatedItems.length > 0) saveCurrentDataToBackup();
 
       switchStep('step9', 'stepNote');
     });
 
-    // --- 全リセット処理 (バックアップ作成) ---
+    // --- 全リセット処理 ---
     document.getElementById('resetBtn').addEventListener('click', () => {
-      const isConfirmed = confirm("本当にすべて消して最初に戻って良いですか？\n※蓄積したデータはすべて失われます。");
+      const isConfirmed = confirm("本当にすべて消して最初に戻って良いですか？\n※バックアップには保存されます。");
       if (!isConfirmed) {
         return; 
       }
 
-      // ★念のためリセット直前にも保存
+      // 念のためリセット直前にも保存
       saveCurrentDataToBackup();
 
       accumulatedItems = [];
@@ -997,7 +1016,7 @@
       document.getElementById('next7').disabled = true;
 
       switchStep('step9', 'step1');
-      checkBackup(); 
+      checkBackup(); // リセット後に最新のバックアップリストを再描画
     });
 
     const copyBtn = document.getElementById('copyBtn');
