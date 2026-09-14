@@ -654,11 +654,62 @@
       switchStep('step4', 'step5');
     });
 
-    // --- Step 5 (商品名) ---
+    // --- Step 5 (商品名・翻訳・カラー整形強化) ---
     const itemNameInput = document.getElementById('itemName');
     const next5Btn = document.getElementById('next5');
     const translateMsg = document.getElementById('translateMsg');
     let typingTimer;
+
+    const colorList = ["black","white","red","blue","green","yellow","orange","purple","pink","brown","grey","gray","navy","olive","beige","silver","gold","khaki","burgundy","charcoal","ivory","cream","multi","multicolor","indigo"];
+    
+    const isColor = (w) => {
+      if (!w) return false;
+      const clean = w.replace(/[^a-zA-Z]/g, '').toLowerCase();
+      return colorList.includes(clean);
+    };
+
+    const capitalizeColor = (s) => {
+      const clean = s.replace(/[^a-zA-Z]/g, '');
+      if (!clean) return "";
+      return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+    };
+
+    const formatColor = (text) => {
+      if (!text) return text;
+      let trimmed = text.trim();
+      if (trimmed.endsWith('"') || trimmed.endsWith('”') || trimmed.endsWith("'")) return text;
+
+      let words = trimmed.split(/\s+/);
+      if (words.length === 0) return text;
+
+      let lastWord = words[words.length - 1];
+
+      if (lastWord.includes('/') || lastWord.includes('x') || lastWord.includes('×') || lastWord.includes('-')) {
+        let parts = lastWord.split(/[/x×-]/i);
+        if (parts.length === 2 && isColor(parts[0]) && isColor(parts[1])) {
+          words[words.length - 1] = `"${capitalizeColor(parts[0])} × ${capitalizeColor(parts[1])}"`;
+          return words.join(' ');
+        }
+      }
+
+      if (isColor(lastWord)) {
+        let colorStr = capitalizeColor(lastWord);
+        let replaceCount = 1;
+
+        if (words.length >= 2 && isColor(words[words.length - 2])) {
+          colorStr = capitalizeColor(words[words.length - 2]) + " × " + colorStr;
+          replaceCount = 2;
+        } else if (words.length >= 3 && /^[x/×&-]$/i.test(words[words.length - 2]) && isColor(words[words.length - 3])) {
+          colorStr = capitalizeColor(words[words.length - 3]) + " × " + colorStr;
+          replaceCount = 3;
+        }
+
+        words.splice(words.length - replaceCount, replaceCount, `"${colorStr}"`);
+        return words.join(' ');
+      }
+
+      return text;
+    };
     
     const validateStep5 = () => {
       const val = itemNameInput.value.trim();
@@ -679,12 +730,23 @@
         if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text)) {
           translateMsg.style.display = 'block'; translateMsg.style.color = '#007bff'; translateMsg.textContent = '自動翻訳中...'; next5Btn.disabled = true;
           try {
-            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=ja|en`);
+            // Google Translate API を使用 (MyMemoryの制限回避)
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=en&dt=t&q=${encodeURIComponent(text.trim())}`);
             const data = await res.json();
-            if (data.responseData && data.responseData.translatedText) itemNameInput.value = formatColor(data.responseData.translatedText);
-            translateMsg.style.color = '#28a745'; translateMsg.textContent = '✓ 翻訳完了';
-            setTimeout(() => { translateMsg.style.display = 'none'; }, 2000);
-          } catch (error) { translateMsg.style.display = 'none'; }
+            let translatedText = "";
+            if (data && data[0]) {
+              data[0].forEach(item => {
+                if (item[0]) translatedText += item[0];
+              });
+            }
+            if (translatedText) {
+              itemNameInput.value = formatColor(translatedText);
+              translateMsg.style.color = '#28a745'; translateMsg.textContent = '✓ 翻訳完了';
+            }
+          } catch (error) { 
+            translateMsg.style.color = '#dc3545'; translateMsg.textContent = '翻訳に失敗しました'; 
+          }
+          setTimeout(() => { translateMsg.style.display = 'none'; }, 2000);
         } else {
           itemNameInput.value = formatColor(text);
         }
