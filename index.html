@@ -202,8 +202,6 @@
       <div class="form-group">
         <label for="itemId">商品ID (任意)</label>
         <input type="text" id="itemId" placeholder="例: 123456">
-        <!-- ★ここに自動取得のメッセージを表示 -->
-        <div id="fetchMsg" class="success-text" style="font-size: 0.9rem; margin-top: 10px;"></div>
         <div class="hint-text">※入力しなくても「次へ」進めます。<br>※<b>商品IDを空欄にして進むと、「商品ページ」入力画面が表示されます。</b></div>
       </div>
       <div class="btn-group">
@@ -477,7 +475,7 @@
       "COMME des GARCONS HOMME Deux", "COMME des GARCONS HOMME PLUS", "COMME des GARCONS SHIRT", "DIOR", "DRIES VAN NOTEN", 
       "HEUGN", "ISSEY MIYAKE", "JIL SANDER", "JUNYA WATANABE", "LEMAIRE", "LOEWE", "Maison Margiela", "MIU MIU", 
       "MM6 Maison Margiela", "NICENESS", "sacai", "SAINT LAURENT", "T.T", "The Row", "Yohji Yamamoto", "yoke", 
-      "©SAINT M××××××", "Acne Studios", "AMIRI", "BALENCIAGA", "BOTTEGA VENETA", "Burberry", "Chrome Hearts", "GUCCI", 
+      "©SAINT Mxxxxxx", "Acne Studios", "AMIRI", "BALENCIAGA", "BOTTEGA VENETA", "Burberry", "Chrome Hearts", "GUCCI", 
       "LOUIS VUITTON", "Moncler", "OUR LEGACY", "PRADA", "RAF SIMONS", "Rick Owens", "Rick Owens DRKSHDW", "Y-3", "adidas", 
       "ARC’TERYX", "C.P. Company", "CANADA GOOSE", "Cav Empt", "COMOLI", "creek", "DAIWA PIER39", "ENNOY", "everyone", 
       "Goldwin", "graphpaper", "HYKE", "LEVI’S", "LEVI’S Vintage Clothing", "Needles", "patagonia", "Polo Ralph Lauren", 
@@ -612,65 +610,19 @@
     document.getElementById('back1').addEventListener('click', () => switchStep('step2', 'stepTx'));
     document.getElementById('next2').addEventListener('click', () => switchStep('step2', 'step3'));
 
-    // --- ★Step 3 (商品ID) と スニダン自動取得ロジック ---
+    // --- Step 3 (商品ID) ---
     const itemPageInput = document.getElementById('itemPage');
     const nextUrlBtn = document.getElementById('nextUrl');
     
     document.getElementById('back2').addEventListener('click', () => switchStep('step3', 'step2'));
-    
-    document.getElementById('next3').addEventListener('click', async () => {
+    document.getElementById('next3').addEventListener('click', () => {
       const itemIdValue = document.getElementById('itemId').value.trim();
-      
       if (itemIdValue === "") {
         nextUrlBtn.disabled = itemPageInput.value.trim() === "";
         switchStep('step3', 'stepUrl');
       } else {
         itemPageInput.value = "";
-        
-        // --- ▼ここから自動取得処理▼ ---
-        const fetchMsg = document.getElementById('fetchMsg');
-        const next3Btn = document.getElementById('next3');
-        const itemNameInput = document.getElementById('itemName');
-
-        // 取得中のメッセージを表示
-        fetchMsg.style.display = 'block';
-        fetchMsg.style.color = '#007bff';
-        fetchMsg.textContent = '🔄 スニダンから商品データを取得中...';
-        next3Btn.disabled = true;
-
-        try {
-          // AllOriginsプロキシを利用してHTMLを取得
-          const targetUrl = `https://snkrdunk.com/products/${itemIdValue}`;
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-          const response = await fetch(proxyUrl);
-          const data = await response.json();
-          
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(data.contents, "text/html");
-          
-          // クラス名からh1タグ（商品名）を探す
-          const h1Tag = doc.querySelector('h1[class*="styles-module-scss-module__gLiF1G__name"]');
-          
-          if (h1Tag && h1Tag.innerText) {
-            itemNameInput.value = h1Tag.innerText.trim();
-            fetchMsg.style.color = '#28a745';
-            fetchMsg.textContent = '✓ 商品名を自動入力しました！';
-          } else {
-            fetchMsg.style.color = '#dc3545';
-            fetchMsg.textContent = '⚠ 商品名が見つかりませんでした（手動で入力してください）';
-          }
-        } catch (error) {
-          fetchMsg.style.color = '#dc3545';
-          fetchMsg.textContent = '⚠ 取得エラーが発生しました（手動で入力してください）';
-        }
-
-        // 0.8秒待機して結果を見せてから次のステップへ進む
-        setTimeout(() => {
-          fetchMsg.style.display = 'none';
-          next3Btn.disabled = false;
-          switchStep('step3', 'step4');
-        }, 800);
-        // --- ▲自動取得処理ここまで▲ ---
+        switchStep('step3', 'step4');
       }
     });
 
@@ -999,7 +951,6 @@
       previousBrand = "";
       document.getElementById('itemPageLinkPreview').style.display = 'none';
       document.getElementById('categoryAutoMsg').style.display = 'none';
-      document.getElementById('fetchMsg').style.display = 'none'; // 取得メッセージもリセット
 
       document.getElementById('nextTx').disabled = true;
       document.getElementById('googleSearchBtn').disabled = true;
@@ -1053,7 +1004,6 @@
       previousBrand = "";
       document.getElementById('itemPageLinkPreview').style.display = 'none';
       document.getElementById('categoryAutoMsg').style.display = 'none';
-      document.getElementById('fetchMsg').style.display = 'none';
 
       document.getElementById('next1').disabled = true; 
       document.getElementById('nextTx').disabled = true;
