@@ -18,7 +18,11 @@
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       width: 100%;
-      max-width: 400px;
+      max-width: 450px;
+      transition: max-width 0.3s ease;
+    }
+    .container.wide {
+      max-width: 800px;
     }
     h2 {
       margin-top: 0;
@@ -110,11 +114,32 @@
       margin-bottom: 20px;
       font-weight: bold;
     }
+
+    /* 横並び用のレイアウトCSS */
+    .copy-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    @media (min-width: 600px) {
+      .copy-layout.has-template {
+        flex-direction: row;
+      }
+      .copy-layout.has-template .copy-main, 
+      .copy-layout.has-template .copy-side {
+        flex: 1;
+      }
+      .copy-layout.has-template .copy-side {
+        border-left: 2px dashed #ccc;
+        padding-left: 20px;
+        margin-top: 0;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <div class="container" id="mainContainer">
     <h2>買取情報入力</h2>
 
     <!-- Step Login: パスワード入力 -->
@@ -173,7 +198,7 @@
         <div class="hint-text">※履歴の目印として使用されます</div>
       </div>
 
-      <!-- 末尾が "-1" の時だけ表示される追加入力項目 -->
+      <!-- 末尾が "-1" の時、または同じ取引の続きの時だけ表示される追加入力項目 -->
       <div id="extraFields" style="display: none; background: #eef5ff; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
         <div class="form-group" style="margin-bottom: 15px;">
           <label for="colANum">A列の数字 (必須)</label>
@@ -346,42 +371,48 @@
     <div id="step9" class="step">
       <h3 id="progressMsg">現在 1 / 3 件 蓄積済み</h3>
       
-      <div class="form-group">
-        <label>蓄積データ (若い順に自動整列済み)</label>
-        <textarea id="resultData" rows="5" readonly></textarea>
-        <div class="hint-text" style="color: #28a745; font-weight: bold; margin-top: 10px;">
-          スプレッドシートの <b>K列（先頭行）</b> を選択して一括貼り付けしてください。
-        </div>
-      </div>
-
-      <div class="btn-group" style="margin-top: 10px;">
-        <button id="copyBtn" class="btn-success">蓄積データを一括コピーする</button>
-      </div>
-
-      <!-- 取引ID末尾が「-1」で入力が完了した時だけ表示されるコピー用テンプレート -->
-      <div id="templateBlock" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #ccc;">
-        <label style="font-weight: bold; color: #333; display: block; margin-bottom: 10px;">スプレッドシート用リンク・範囲</label>
+      <div id="copyLayout" class="copy-layout has-template">
         
-        <!-- A列の数字範囲 -->
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label style="font-size: 0.85rem; color: #555; margin-bottom: 5px; display: block;">A列の数字範囲</label>
-          <div style="display: flex; gap: 10px;">
-            <input type="text" id="templateRange" readonly style="background-color: #fff3cd; flex: 1;">
-            <button id="copyRangeBtn" class="btn-success" style="background-color: #17a2b8; flex: 0 0 100px; padding: 10px;">コピー</button>
+        <!-- 左側：蓄積データ -->
+        <div class="copy-main">
+          <div class="form-group">
+            <label>蓄積データ (若い順に自動整列済み)</label>
+            <textarea id="resultData" rows="6" readonly></textarea>
+            <div class="hint-text" style="color: #28a745; font-weight: bold; margin-top: 10px;">
+              スプレッドシートの <b>K列（先頭行）</b> を選択して一括貼り付けしてください。
+            </div>
+          </div>
+          <div class="btn-group" style="margin-top: 10px;">
+            <button id="copyBtn" class="btn-success">蓄積データを一括コピー</button>
           </div>
         </div>
 
-        <!-- スプレッドシートリンク -->
-        <div class="form-group" style="margin-bottom: 5px;">
-          <label style="font-size: 0.85rem; color: #555; margin-bottom: 5px; display: block;">リンク</label>
-          <div style="display: flex; gap: 10px;">
-            <input type="text" id="templateLink" readonly style="background-color: #fff3cd; flex: 1;">
-            <button id="copyLinkBtn" class="btn-success" style="background-color: #17a2b8; flex: 0 0 100px; padding: 10px;">コピー</button>
+        <!-- 右側：テンプレートブロック（常に表示・レイアウト固定） -->
+        <div id="templateBlock" class="copy-side">
+          <label style="font-weight: bold; color: #333; display: block; margin-bottom: 10px;">スプレッドシート用リンク・範囲</label>
+          
+          <!-- A列の数字範囲 -->
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label style="font-size: 0.85rem; color: #555; margin-bottom: 5px; display: block;">A列の数字範囲</label>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="templateRange" readonly style="background-color: #fff3cd; flex: 1;">
+              <button id="copyRangeBtn" class="btn-success" style="background-color: #17a2b8; flex: 0 0 80px; padding: 10px; font-size: 0.9rem;">コピー</button>
+            </div>
+          </div>
+
+          <!-- スプレッドシートリンク -->
+          <div class="form-group" style="margin-bottom: 5px;">
+            <label style="font-size: 0.85rem; color: #555; margin-bottom: 5px; display: block;">リンク</label>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="templateLink" readonly style="background-color: #fff3cd; flex: 1;">
+              <button id="copyLinkBtn" class="btn-success" style="background-color: #17a2b8; flex: 0 0 80px; padding: 10px; font-size: 0.9rem;">コピー</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="btn-group" style="margin-top: 20px;" id="continueBtnGroup">
+      </div> <!-- copy-layout -->
+
+      <div class="btn-group" style="margin-top: 30px;" id="continueBtnGroup">
         <button id="continueBtn" class="btn-primary">次の商品を続けて入力</button>
       </div>
       
@@ -397,6 +428,13 @@
     const switchStep = (from, to) => {
       document.getElementById(from).classList.remove('active');
       document.getElementById(to).classList.add('active');
+      
+      // コピー画面（step9）の時だけコンテナを広くする
+      if (to === 'step9') {
+        document.getElementById('mainContainer').classList.add('wide');
+      } else {
+        document.getElementById('mainContainer').classList.remove('wide');
+      }
     };
 
     // --- ログイン管理 ---
@@ -408,7 +446,7 @@
 
     document.getElementById('loginBtn').addEventListener('click', () => {
       const pwdInput = document.getElementById('password').value;
-      if (pwdInput === '0009') {
+      if (pwdInput === '1029') {
         sessionStorage.setItem('authenticated', 'true');
         document.getElementById('password').value = '';
         document.getElementById('passwordError').style.display = 'none';
@@ -433,7 +471,7 @@
     let globalRowNum = "";  
 
     // --- バックアップ・復元管理 ---
-    const BACKUP_KEY = "apparel_backup_data_v3"; 
+    const BACKUP_KEY = "apparel_backup_data_v4"; 
     const EXPIRATION_MS = 6 * 60 * 60 * 1000; 
 
     const saveCurrentDataToBackup = () => {
@@ -638,8 +676,13 @@
       const countVal = document.getElementById('txCount').value.trim();
       const isCountValid = parseInt(countVal, 10) > 0;
 
+      // ★ 変更点：末尾が-1の時、または同じ取引ID(真ん中の数字)の続きの時に表示
       let isExtraValid = true;
-      if (val.endsWith('-1')) {
+      const txParts = val.split('-');
+      const middlePart = txParts.length >= 2 ? txParts[1] : "";
+      const isSameTx = (currentTxMiddle !== "" && currentTxMiddle === middlePart);
+
+      if (val.endsWith('-1') || isSameTx) {
         document.getElementById('extraFields').style.display = 'block';
         const cA = document.getElementById('colANum').value.trim();
         const rN = document.getElementById('rowNum').value.trim();
@@ -957,7 +1000,7 @@
         document.getElementById('continueBtnGroup').style.display = 'none';
       }
 
-      // グローバル変数に値があればテンプレート生成枠を表示
+      // テンプレート生成枠は常に表示（値があれば設定、なければ空欄）
       if (globalColANum && globalRowNum) {
         const colA = parseInt(globalColANum, 10);
         const row = parseInt(globalRowNum, 10);
@@ -970,17 +1013,17 @@
         
         document.getElementById('templateRange').value = rangeText;
         document.getElementById('templateLink').value = linkText;
-        document.getElementById('templateBlock').style.display = 'block';
       } else {
-        document.getElementById('templateBlock').style.display = 'none';
+        document.getElementById('templateRange').value = "";
+        document.getElementById('templateLink').value = "";
       }
     };
 
     document.getElementById('nextNote').addEventListener('click', () => {
       const txIdVal = document.getElementById('txId').value.trim();
       const txParts = txIdVal.split('-');
-      const middlePart = txParts[1];
-      const suffixNum = parseInt(txParts[2], 10);
+      const middlePart = txParts.length >= 2 ? txParts[1] : "";
+      const suffixNum = txParts.length >= 3 ? parseInt(txParts[2], 10) : 1;
 
       // 取引が変わったら蓄積データやテンプレ情報をリセット
       if (currentTxMiddle !== "" && currentTxMiddle !== middlePart) {
@@ -991,8 +1034,8 @@
       currentTxMiddle = middlePart;
       currentFullTxId = txIdVal; 
 
-      // 「-1」の時だけ入力されたA列・行数を保存
-      if (txIdVal.endsWith('-1')) {
+      // ★ 変更点：「-1」の時、または同じ取引の続きとしてフィールドが表示されている場合は保存
+      if (txIdVal.endsWith('-1') || document.getElementById('extraFields').style.display === 'block') {
         globalColANum = document.getElementById('colANum').value.trim();
         globalRowNum = document.getElementById('rowNum').value.trim();
       }
@@ -1031,6 +1074,7 @@
     // --- 次の商品を追加 ---
     document.getElementById('continueBtn').addEventListener('click', () => {
       document.getElementById('txId').value = "";
+      // txCount, colANum, rowNum はクリアしない
       
       document.getElementById('modelNumber').value = "";
       document.getElementById('itemId').value = "";
