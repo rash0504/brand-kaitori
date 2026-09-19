@@ -157,7 +157,7 @@
         <button id="next1" class="btn-primary" disabled>次へ</button>
       </div>
       
-      <!-- ★復元ボタンリスト（複数表示用） -->
+      <!-- 復元ボタンリスト（複数表示用） -->
       <div id="restoreGroup" style="display: none; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #ccc;">
         <label style="color: #17a2b8; margin-bottom: 10px;">🔄 自動保存データ (6時間以内)</label>
         <div id="restoreList" style="display: flex; flex-direction: column; gap: 10px;"></div>
@@ -170,13 +170,27 @@
         <label for="txId">取引ID (必須)</label>
         <input type="text" id="txId" placeholder="例: 1-123456-1">
         <div id="txError" class="error-text">形式が正しくありません (例: A-B-C)</div>
-        <div class="hint-text">※スプレッドシートには反映されません（データ蓄積と並び替え用）</div>
+        <div class="hint-text">※履歴の目印として使用されます</div>
       </div>
+
+      <!-- 末尾が "-1" の時だけ表示される追加入力項目 -->
+      <div id="extraFields" style="display: none; background: #eef5ff; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="colANum">A列の数字 (必須)</label>
+          <input type="number" id="colANum" placeholder="例: 8000">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="rowNum">行数 (必須)</label>
+          <input type="number" id="rowNum" placeholder="例: 7000">
+        </div>
+      </div>
+
       <div class="form-group">
         <label for="txCount">件数 (必須)</label>
         <input type="number" id="txCount" min="1" placeholder="例: 3">
         <div class="hint-text">※ここで設定した件数までデータを蓄積できます</div>
       </div>
+
       <div class="btn-group">
         <button id="backTx" class="btn-secondary">戻る</button>
         <button id="nextTx" class="btn-primary" disabled>次へ</button>
@@ -340,12 +354,23 @@
         </div>
       </div>
 
-      <div class="btn-group" style="margin-top: 20px;" id="continueBtnGroup">
-        <button id="continueBtn" class="btn-primary">次の商品を続けて入力</button>
-      </div>
-
       <div class="btn-group" style="margin-top: 10px;">
         <button id="copyBtn" class="btn-success">蓄積データを一括コピーする</button>
+      </div>
+
+      <!-- 取引ID末尾が「-1」で入力が完了した時だけ表示されるコピー用テンプレート -->
+      <div id="templateBlock" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #ccc;">
+        <div class="form-group" style="margin-bottom: 5px;">
+          <label>スプレッドシート用リンク・範囲</label>
+          <textarea id="templateData" rows="3" readonly style="background-color: #fff3cd;"></textarea>
+        </div>
+        <div class="btn-group" style="margin-top: 10px;">
+          <button id="copyTemplateBtn" class="btn-success" style="background-color: #17a2b8;">リンク情報をコピー</button>
+        </div>
+      </div>
+
+      <div class="btn-group" style="margin-top: 20px;" id="continueBtnGroup">
+        <button id="continueBtn" class="btn-primary">次の商品を続けて入力</button>
       </div>
       
       <div class="btn-group" style="margin-top: 15px;">
@@ -371,7 +396,7 @@
 
     document.getElementById('loginBtn').addEventListener('click', () => {
       const pwdInput = document.getElementById('password').value;
-      if (pwdInput === '1024') {
+      if (pwdInput === '0009') {
         sessionStorage.setItem('authenticated', 'true');
         document.getElementById('password').value = '';
         document.getElementById('passwordError').style.display = 'none';
@@ -388,27 +413,32 @@
       }
     });
 
-    // --- 蓄積データ管理 ---
+    // --- データ管理 ---
     let accumulatedItems = [];
     let currentTxMiddle = ""; 
+    let currentFullTxId = ""; 
+    let globalColANum = ""; // -1入力時に保持
+    let globalRowNum = "";  // -1入力時に保持
 
-    // --- バックアップ・復元管理 (複数データ対応) ---
-    const BACKUP_KEY = "apparel_backup_data_v2"; // キーを変更して安全に移行
+    // --- バックアップ・復元管理 ---
+    const BACKUP_KEY = "apparel_backup_data_v3"; 
     const EXPIRATION_MS = 6 * 60 * 60 * 1000; 
 
     const saveCurrentDataToBackup = () => {
-      if (accumulatedItems.length > 0 && currentTxMiddle !== "") {
+      if (accumulatedItems.length > 0 && currentFullTxId !== "") {
         let backups = JSON.parse(localStorage.getItem(BACKUP_KEY)) || [];
         const now = new Date().getTime();
         
-        // 6時間経過した古いデータを削除
         backups = backups.filter(b => now - b.timestamp <= EXPIRATION_MS);
 
-        const existingIndex = backups.findIndex(b => b.currentTxMiddle === currentTxMiddle);
+        const existingIndex = backups.findIndex(b => b.fullTxId === currentFullTxId);
         const backupData = {
           timestamp: now,
           accumulatedItems: accumulatedItems,
           currentTxMiddle: currentTxMiddle,
+          fullTxId: currentFullTxId, 
+          colANum: globalColANum,
+          rowNum: globalRowNum,
           txCount: document.getElementById('txCount').value,
           staff: document.getElementById('staff').value,
           timeStr: new Date(now).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
@@ -435,7 +465,6 @@
       restoreList.innerHTML = '';
 
       if (backups.length > 0) {
-        // 新しい順に並び替え
         backups.sort((a, b) => b.timestamp - a.timestamp);
 
         backups.forEach(b => {
@@ -444,10 +473,19 @@
           btn.style.fontSize = '0.9rem';
           btn.style.padding = '10px';
           btn.style.textAlign = 'left';
-          btn.textContent = `⏱ ${b.timeStr} ｜ ID: ***-${b.currentTxMiddle}-*** (${b.accumulatedItems.length}件 蓄積)`;
+          
+          btn.textContent = `⏱ ${b.timeStr} ｜ ID: ${b.fullTxId} (${b.accumulatedItems.length}件 蓄積)`;
+          
           btn.onclick = () => {
             accumulatedItems = b.accumulatedItems || [];
             currentTxMiddle = b.currentTxMiddle || "";
+            currentFullTxId = b.fullTxId || "";
+            globalColANum = b.colANum || "";
+            globalRowNum = b.rowNum || "";
+            
+            document.getElementById('txId').value = b.fullTxId || "";
+            document.getElementById('colANum').value = globalColANum;
+            document.getElementById('rowNum').value = globalRowNum;
             document.getElementById('txCount').value = b.txCount || "";
             document.getElementById('staff').value = b.staff || "";
             
@@ -455,7 +493,7 @@
             
             updateResultScreen();
             switchStep('step1', 'step9');
-            alert(`取引ID「***-${b.currentTxMiddle}-***」のデータを復元しました。`);
+            alert(`取引ID「${b.fullTxId}」のデータを復元しました。`);
           };
           restoreList.appendChild(btn);
         });
@@ -475,7 +513,7 @@
       "COMME des GARCONS HOMME Deux", "COMME des GARCONS HOMME PLUS", "COMME des GARCONS SHIRT", "DIOR", "DRIES VAN NOTEN", 
       "HEUGN", "ISSEY MIYAKE", "JIL SANDER", "JUNYA WATANABE", "LEMAIRE", "LOEWE", "Maison Margiela", "MIU MIU", 
       "MM6 Maison Margiela", "NICENESS", "sacai", "SAINT LAURENT", "T.T", "The Row", "Yohji Yamamoto", "yoke", 
-      "©SAINT Mxxxxxx", "Acne Studios", "AMIRI", "BALENCIAGA", "BOTTEGA VENETA", "Burberry", "Chrome Hearts", "GUCCI", 
+      "©SAINT M××××××", "Acne Studios", "AMIRI", "BALENCIAGA", "BOTTEGA VENETA", "Burberry", "Chrome Hearts", "GUCCI", 
       "LOUIS VUITTON", "Moncler", "OUR LEGACY", "PRADA", "RAF SIMONS", "Rick Owens", "Rick Owens DRKSHDW", "Y-3", "adidas", 
       "ARC’TERYX", "C.P. Company", "CANADA GOOSE", "Cav Empt", "COMOLI", "creek", "DAIWA PIER39", "ENNOY", "everyone", 
       "Goldwin", "graphpaper", "HYKE", "LEVI’S", "LEVI’S Vintage Clothing", "Needles", "patagonia", "Polo Ralph Lauren", 
@@ -576,19 +614,36 @@
 
     next1Btn.addEventListener('click', () => switchStep('step1', 'stepTx'));
 
-    // --- Step Tx (取引IDと件数) ---
+    // --- Step Tx (取引IDと各種情報入力) ---
     const txIdInput = document.getElementById('txId');
-    const txCountInput = document.getElementById('txCount');
     const nextTxBtn = document.getElementById('nextTx');
     
     const validateTx = () => {
-      const isValid = /^\d{1,3}-\d+-\d{1,3}$/.test(txIdInput.value.trim());
-      const count = parseInt(txCountInput.value);
-      nextTxBtn.disabled = !(isValid && count > 0);
-      document.getElementById('txError').style.display = (txIdInput.value !== "" && !isValid) ? 'block' : 'none';
+      const val = txIdInput.value.trim();
+      const isValidId = /^\d{1,3}-\d+-\d{1,3}$/.test(val);
+      document.getElementById('txError').style.display = (val !== "" && !isValidId) ? 'block' : 'none';
+
+      const countVal = document.getElementById('txCount').value.trim();
+      const isCountValid = parseInt(countVal, 10) > 0;
+
+      let isExtraValid = true;
+      if (val.endsWith('-1')) {
+        document.getElementById('extraFields').style.display = 'block';
+        const cA = document.getElementById('colANum').value.trim();
+        const rN = document.getElementById('rowNum').value.trim();
+        isExtraValid = (cA !== "" && rN !== "");
+      } else {
+        document.getElementById('extraFields').style.display = 'none';
+      }
+
+      nextTxBtn.disabled = !(isValidId && isCountValid && isExtraValid);
     };
+
     txIdInput.addEventListener('input', validateTx);
-    txCountInput.addEventListener('input', validateTx);
+    document.getElementById('colANum').addEventListener('input', validateTx);
+    document.getElementById('rowNum').addEventListener('input', validateTx);
+    document.getElementById('txCount').addEventListener('input', validateTx);
+
     document.getElementById('backTx').addEventListener('click', () => switchStep('stepTx', 'step1'));
     nextTxBtn.addEventListener('click', () => switchStep('stepTx', 'step2'));
 
@@ -687,7 +742,7 @@
       switchStep('step4', 'step5');
     });
 
-    // --- Step 5 (商品名・翻訳・カラー整形強化) ---
+    // --- Step 5 (商品名・翻訳・カラー整形) ---
     const itemNameInput = document.getElementById('itemName');
     const next5Btn = document.getElementById('next5');
     const translateMsg = document.getElementById('translateMsg');
@@ -858,7 +913,7 @@
     const itemNoteInput = document.getElementById('itemNote');
     document.getElementById('backNote').addEventListener('click', () => switchStep('stepNote', 'step8'));
 
-    // --- データ蓄積処理 ---
+    // --- データ出力・蓄積処理 ---
     const updateResultScreen = () => {
       const expectedCount = parseInt(document.getElementById('txCount').value, 10) || 1;
 
@@ -889,6 +944,22 @@
       } else {
         document.getElementById('continueBtnGroup').style.display = 'none';
       }
+
+      // グローバル変数に値があればテンプレート生成枠を表示
+      if (globalColANum && globalRowNum) {
+        const colA = parseInt(globalColANum, 10);
+        const row = parseInt(globalRowNum, 10);
+        
+        const endColA = colA + expectedCount - 1;
+        const endRow = row + expectedCount - 1;
+        
+        const templateText = `${colA}-${endColA}\nhttps://docs.google.com/spreadsheets/d/1bFSJArcYUHmUlm8sZbazfVp3CNaFTu7OMsYmruXnE5E/edit?gid=157147023#gid=157147023&range=${row}:${endRow}`;
+        
+        document.getElementById('templateData').value = templateText;
+        document.getElementById('templateBlock').style.display = 'block';
+      } else {
+        document.getElementById('templateBlock').style.display = 'none';
+      }
     };
 
     document.getElementById('nextNote').addEventListener('click', () => {
@@ -897,10 +968,20 @@
       const middlePart = txParts[1];
       const suffixNum = parseInt(txParts[2], 10);
 
+      // 取引が変わったら蓄積データやテンプレ情報をリセット
       if (currentTxMiddle !== "" && currentTxMiddle !== middlePart) {
         accumulatedItems = [];
+        globalColANum = "";
+        globalRowNum = "";
       }
       currentTxMiddle = middlePart;
+      currentFullTxId = txIdVal; 
+
+      // 「-1」の時だけ入力されたA列・行数を保存
+      if (txIdVal.endsWith('-1')) {
+        globalColANum = document.getElementById('colANum').value.trim();
+        globalRowNum = document.getElementById('rowNum').value.trim();
+      }
 
       const itemName = document.getElementById('itemName').value;
       const itemId = document.getElementById('itemId').value.trim();
@@ -928,9 +1009,7 @@
 
       accumulatedItems.push({ suffix: suffixNum, tsvData: dataArray });
 
-      // リストに追加されたタイミングでバックアップを保存
       saveCurrentDataToBackup();
-
       updateResultScreen();
       switchStep('stepNote', 'step9');
     });
@@ -938,6 +1017,8 @@
     // --- 次の商品を追加 ---
     document.getElementById('continueBtn').addEventListener('click', () => {
       document.getElementById('txId').value = "";
+      // txCount, colANum, rowNum はクリアしない
+      
       document.getElementById('modelNumber').value = "";
       document.getElementById('itemId').value = "";
       document.getElementById('itemPage').value = "";
@@ -961,35 +1042,45 @@
       document.getElementById('next6').disabled = true;
       document.getElementById('next7').disabled = true;
 
+      document.getElementById('extraFields').style.display = 'none';
+
       switchStep('step9', 'stepTx');
     });
 
     // --- コピー画面での「戻る」処理 ---
     document.getElementById('back8').addEventListener('click', () => {
       accumulatedItems.pop();
-      if (accumulatedItems.length === 0) currentTxMiddle = "";
+      if (accumulatedItems.length === 0) {
+        currentTxMiddle = "";
+        currentFullTxId = "";
+        globalColANum = "";
+        globalRowNum = "";
+      }
       
-      // 戻った（削除した）タイミングでもバックアップを更新
       if (accumulatedItems.length > 0) saveCurrentDataToBackup();
 
       switchStep('step9', 'stepNote');
     });
 
-    // --- 全リセット処理 ---
+    // --- 全リセット処理 (バックアップ作成) ---
     document.getElementById('resetBtn').addEventListener('click', () => {
       const isConfirmed = confirm("本当にすべて消して最初に戻って良いですか？\n※バックアップには保存されます。");
       if (!isConfirmed) {
         return; 
       }
 
-      // 念のためリセット直前にも保存
       saveCurrentDataToBackup();
 
       accumulatedItems = [];
       currentTxMiddle = "";
+      currentFullTxId = "";
+      globalColANum = "";
+      globalRowNum = "";
       
       document.getElementById('staff').value = ""; 
       document.getElementById('txId').value = "";
+      document.getElementById('colANum').value = "";
+      document.getElementById('rowNum').value = "";
       document.getElementById('txCount').value = ""; 
       document.getElementById('modelNumber').value = "";
       document.getElementById('itemId').value = "";
@@ -1015,8 +1106,10 @@
       document.getElementById('next6').disabled = true;
       document.getElementById('next7').disabled = true;
 
+      document.getElementById('extraFields').style.display = 'none';
+
       switchStep('step9', 'step1');
-      checkBackup(); // リセット後に最新のバックアップリストを再描画
+      checkBackup(); 
     });
 
     const copyBtn = document.getElementById('copyBtn');
@@ -1027,6 +1120,18 @@
         setTimeout(() => {
           copyBtn.textContent = '蓄積データを一括コピーする';
           copyBtn.style.backgroundColor = '#28a745';
+        }, 2000);
+      }).catch(() => alert('コピーに失敗しました。'));
+    });
+
+    const copyTemplateBtn = document.getElementById('copyTemplateBtn');
+    copyTemplateBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(document.getElementById('templateData').value).then(() => {
+        copyTemplateBtn.textContent = '✓ コピー済';
+        copyTemplateBtn.style.backgroundColor = '#138496';
+        setTimeout(() => {
+          copyTemplateBtn.textContent = 'リンク情報をコピー';
+          copyTemplateBtn.style.backgroundColor = '#17a2b8';
         }, 2000);
       }).catch(() => alert('コピーに失敗しました。'));
     });
