@@ -360,12 +360,24 @@
 
       <!-- 取引ID末尾が「-1」で入力が完了した時だけ表示されるコピー用テンプレート -->
       <div id="templateBlock" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #ccc;">
-        <div class="form-group" style="margin-bottom: 5px;">
-          <label>スプレッドシート用リンク・範囲</label>
-          <textarea id="templateData" rows="3" readonly style="background-color: #fff3cd;"></textarea>
+        <label style="font-weight: bold; color: #333; display: block; margin-bottom: 10px;">スプレッドシート用リンク・範囲</label>
+        
+        <!-- A列の数字範囲 -->
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="font-size: 0.85rem; color: #555; margin-bottom: 5px; display: block;">A列の数字範囲</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="templateRange" readonly style="background-color: #fff3cd; flex: 1;">
+            <button id="copyRangeBtn" class="btn-success" style="background-color: #17a2b8; flex: 0 0 100px; padding: 10px;">コピー</button>
+          </div>
         </div>
-        <div class="btn-group" style="margin-top: 10px;">
-          <button id="copyTemplateBtn" class="btn-success" style="background-color: #17a2b8;">リンク情報をコピー</button>
+
+        <!-- スプレッドシートリンク -->
+        <div class="form-group" style="margin-bottom: 5px;">
+          <label style="font-size: 0.85rem; color: #555; margin-bottom: 5px; display: block;">リンク</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="templateLink" readonly style="background-color: #fff3cd; flex: 1;">
+            <button id="copyLinkBtn" class="btn-success" style="background-color: #17a2b8; flex: 0 0 100px; padding: 10px;">コピー</button>
+          </div>
         </div>
       </div>
 
@@ -417,8 +429,8 @@
     let accumulatedItems = [];
     let currentTxMiddle = ""; 
     let currentFullTxId = ""; 
-    let globalColANum = ""; // -1入力時に保持
-    let globalRowNum = "";  // -1入力時に保持
+    let globalColANum = ""; 
+    let globalRowNum = "";  
 
     // --- バックアップ・復元管理 ---
     const BACKUP_KEY = "apparel_backup_data_v3"; 
@@ -953,9 +965,11 @@
         const endColA = colA + expectedCount - 1;
         const endRow = row + expectedCount - 1;
         
-        const templateText = `${colA}-${endColA}\nhttps://docs.google.com/spreadsheets/d/1bFSJArcYUHmUlm8sZbazfVp3CNaFTu7OMsYmruXnE5E/edit?gid=157147023#gid=157147023&range=${row}:${endRow}`;
+        const rangeText = `${colA}-${endColA}`;
+        const linkText = `https://docs.google.com/spreadsheets/d/1bFSJArcYUHmUlm8sZbazfVp3CNaFTu7OMsYmruXnE5E/edit?gid=157147023#gid=157147023&range=${row}:${endRow}`;
         
-        document.getElementById('templateData').value = templateText;
+        document.getElementById('templateRange').value = rangeText;
+        document.getElementById('templateLink').value = linkText;
         document.getElementById('templateBlock').style.display = 'block';
       } else {
         document.getElementById('templateBlock').style.display = 'none';
@@ -1017,7 +1031,6 @@
     // --- 次の商品を追加 ---
     document.getElementById('continueBtn').addEventListener('click', () => {
       document.getElementById('txId').value = "";
-      // txCount, colANum, rowNum はクリアしない
       
       document.getElementById('modelNumber').value = "";
       document.getElementById('itemId').value = "";
@@ -1124,14 +1137,26 @@
       }).catch(() => alert('コピーに失敗しました。'));
     });
 
-    const copyTemplateBtn = document.getElementById('copyTemplateBtn');
-    copyTemplateBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(document.getElementById('templateData').value).then(() => {
-        copyTemplateBtn.textContent = '✓ コピー済';
-        copyTemplateBtn.style.backgroundColor = '#138496';
+    const copyRangeBtn = document.getElementById('copyRangeBtn');
+    copyRangeBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(document.getElementById('templateRange').value).then(() => {
+        copyRangeBtn.textContent = '✓ コピー済';
+        copyRangeBtn.style.backgroundColor = '#138496';
         setTimeout(() => {
-          copyTemplateBtn.textContent = 'リンク情報をコピー';
-          copyTemplateBtn.style.backgroundColor = '#17a2b8';
+          copyRangeBtn.textContent = 'コピー';
+          copyRangeBtn.style.backgroundColor = '#17a2b8';
+        }, 2000);
+      }).catch(() => alert('コピーに失敗しました。'));
+    });
+
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    copyLinkBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(document.getElementById('templateLink').value).then(() => {
+        copyLinkBtn.textContent = '✓ コピー済';
+        copyLinkBtn.style.backgroundColor = '#138496';
+        setTimeout(() => {
+          copyLinkBtn.textContent = 'コピー';
+          copyLinkBtn.style.backgroundColor = '#17a2b8';
         }, 2000);
       }).catch(() => alert('コピーに失敗しました。'));
     });
