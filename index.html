@@ -198,7 +198,7 @@
         <div class="hint-text">※履歴の目印として使用されます</div>
       </div>
 
-      <!-- 末尾が "-1" の時、または同じ取引の続きの時だけ表示される追加入力項目 -->
+      <!-- 末尾が "-1" の時だけ表示される追加入力項目 -->
       <div id="extraFields" style="display: none; background: #eef5ff; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
         <div class="form-group" style="margin-bottom: 15px;">
           <label for="colANum">A列の数字 (必須)</label>
@@ -371,7 +371,7 @@
     <div id="step9" class="step">
       <h3 id="progressMsg">現在 1 / 3 件 蓄積済み</h3>
       
-      <div id="copyLayout" class="copy-layout has-template">
+      <div id="copyLayout" class="copy-layout">
         
         <!-- 左側：蓄積データ -->
         <div class="copy-main">
@@ -387,8 +387,8 @@
           </div>
         </div>
 
-        <!-- 右側：テンプレートブロック（常に表示・レイアウト固定） -->
-        <div id="templateBlock" class="copy-side">
+        <!-- 右側：テンプレートブロック（末尾-1の時だけ表示） -->
+        <div id="templateBlock" class="copy-side" style="display: none;">
           <label style="font-weight: bold; color: #333; display: block; margin-bottom: 10px;">スプレッドシート用リンク・範囲</label>
           
           <!-- A列の数字範囲 -->
@@ -429,8 +429,8 @@
       document.getElementById(from).classList.remove('active');
       document.getElementById(to).classList.add('active');
       
-      // コピー画面（step9）の時だけコンテナを広くする
-      if (to === 'step9') {
+      // コピー画面（step9）の時、templateBlockが表示されていれば広くする
+      if (to === 'step9' && document.getElementById('templateBlock').style.display === 'block') {
         document.getElementById('mainContainer').classList.add('wide');
       } else {
         document.getElementById('mainContainer').classList.remove('wide');
@@ -534,8 +534,14 @@
             globalRowNum = b.rowNum || "";
             
             document.getElementById('txId').value = b.fullTxId || "";
-            document.getElementById('colANum').value = globalColANum;
-            document.getElementById('rowNum').value = globalRowNum;
+            // 復元時、画面に表示させるかは末尾が-1かどうかで判定
+            if (b.fullTxId.endsWith('-1')) {
+              document.getElementById('colANum').value = globalColANum;
+              document.getElementById('rowNum').value = globalRowNum;
+            } else {
+              document.getElementById('colANum').value = "";
+              document.getElementById('rowNum').value = "";
+            }
             document.getElementById('txCount').value = b.txCount || "";
             document.getElementById('staff').value = b.staff || "";
             
@@ -676,13 +682,9 @@
       const countVal = document.getElementById('txCount').value.trim();
       const isCountValid = parseInt(countVal, 10) > 0;
 
-      // ★ 変更点：末尾が-1の時、または同じ取引ID(真ん中の数字)の続きの時に表示
+      // ★ 変更点：末尾が-1の時「だけ」入力欄を表示
       let isExtraValid = true;
-      const txParts = val.split('-');
-      const middlePart = txParts.length >= 2 ? txParts[1] : "";
-      const isSameTx = (currentTxMiddle !== "" && currentTxMiddle === middlePart);
-
-      if (val.endsWith('-1') || isSameTx) {
+      if (val.endsWith('-1')) {
         document.getElementById('extraFields').style.display = 'block';
         const cA = document.getElementById('colANum').value.trim();
         const rN = document.getElementById('rowNum').value.trim();
@@ -1000,8 +1002,8 @@
         document.getElementById('continueBtnGroup').style.display = 'none';
       }
 
-      // テンプレート生成枠は常に表示（値があれば設定、なければ空欄）
-      if (globalColANum && globalRowNum) {
+      // ★ 変更点：現在の取引IDが -1 で終わっている時だけテンプレート生成枠を表示
+      if (globalColANum && globalRowNum && currentFullTxId.endsWith('-1')) {
         const colA = parseInt(globalColANum, 10);
         const row = parseInt(globalRowNum, 10);
         
@@ -1013,17 +1015,25 @@
         
         document.getElementById('templateRange').value = rangeText;
         document.getElementById('templateLink').value = linkText;
+        
+        document.getElementById('templateBlock').style.display = 'block';
+        document.getElementById('copyLayout').classList.add('has-template');
+        document.getElementById('mainContainer').classList.add('wide');
       } else {
         document.getElementById('templateRange').value = "";
         document.getElementById('templateLink').value = "";
+
+        document.getElementById('templateBlock').style.display = 'none';
+        document.getElementById('copyLayout').classList.remove('has-template');
+        document.getElementById('mainContainer').classList.remove('wide');
       }
     };
 
     document.getElementById('nextNote').addEventListener('click', () => {
       const txIdVal = document.getElementById('txId').value.trim();
       const txParts = txIdVal.split('-');
-      const middlePart = txParts.length >= 2 ? txParts[1] : "";
-      const suffixNum = txParts.length >= 3 ? parseInt(txParts[2], 10) : 1;
+      const middlePart = txParts[1];
+      const suffixNum = parseInt(txParts[2], 10);
 
       // 取引が変わったら蓄積データやテンプレ情報をリセット
       if (currentTxMiddle !== "" && currentTxMiddle !== middlePart) {
@@ -1034,8 +1044,8 @@
       currentTxMiddle = middlePart;
       currentFullTxId = txIdVal; 
 
-      // ★ 変更点：「-1」の時、または同じ取引の続きとしてフィールドが表示されている場合は保存
-      if (txIdVal.endsWith('-1') || document.getElementById('extraFields').style.display === 'block') {
+      // 「-1」の時だけ入力されたA列・行数を保存
+      if (txIdVal.endsWith('-1')) {
         globalColANum = document.getElementById('colANum').value.trim();
         globalRowNum = document.getElementById('rowNum').value.trim();
       }
