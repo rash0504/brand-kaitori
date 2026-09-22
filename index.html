@@ -135,6 +135,16 @@
         margin-top: 0;
       }
     }
+
+    /* クイックツールの入力欄調整 */
+    .quick-inputs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .quick-inputs > div {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -181,6 +191,43 @@
       </div>
       <div class="btn-group">
         <button id="next1" class="btn-primary" disabled>次へ</button>
+      </div>
+
+      <!-- ★追加：気楽に使えるリンク生成ツール -->
+      <div style="margin-top: 30px; background: #eef5ff; padding: 15px; border-radius: 6px; border: 1px solid #b8daff;">
+        <label style="font-weight: bold; color: #004085; display: block; margin-bottom: 10px;">🔗 スプレッドシート リンク生成ツール</label>
+        <div class="hint-text" style="margin-bottom: 15px;">※入力フローとは関係なく、いつでも計算してコピーできます。</div>
+        
+        <div class="quick-inputs">
+          <div>
+            <label style="font-size: 0.8rem;">A列の数字</label>
+            <input type="number" id="quickColA" placeholder="例: 8000">
+          </div>
+          <div>
+            <label style="font-size: 0.8rem;">行数</label>
+            <input type="number" id="quickRow" placeholder="例: 7000">
+          </div>
+          <div>
+            <label style="font-size: 0.8rem;">件数</label>
+            <input type="number" id="quickCount" placeholder="例: 3">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label style="font-size: 0.85rem; color: #555; margin-bottom: 5px; display: block;">A列の数字範囲</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="quickTemplateRange" readonly style="background-color: #fff; flex: 1;">
+            <button id="quickCopyRangeBtn" class="btn-success" style="background-color: #17a2b8; flex: 0 0 80px; padding: 10px; font-size: 0.9rem;" disabled>コピー</button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-size: 0.85rem; color: #555; margin-bottom: 5px; display: block;">リンク</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="quickTemplateLink" readonly style="background-color: #fff; flex: 1;">
+            <button id="quickCopyLinkBtn" class="btn-success" style="background-color: #17a2b8; flex: 0 0 80px; padding: 10px; font-size: 0.9rem;" disabled>コピー</button>
+          </div>
+        </div>
       </div>
       
       <!-- 復元ボタンリスト（複数表示用） -->
@@ -470,6 +517,63 @@
         document.getElementById('loginBtn').click();
       }
     });
+
+    // --- 気楽に使えるリンク生成ツール（Step 1用） ---
+    const updateQuickTemplate = () => {
+      const colA = parseInt(document.getElementById('quickColA').value, 10);
+      const row = parseInt(document.getElementById('quickRow').value, 10);
+      const count = parseInt(document.getElementById('quickCount').value, 10);
+
+      const rangeInput = document.getElementById('quickTemplateRange');
+      const linkInput = document.getElementById('quickTemplateLink');
+      const copyRangeBtn = document.getElementById('quickCopyRangeBtn');
+      const copyLinkBtn = document.getElementById('quickCopyLinkBtn');
+
+      if (!isNaN(colA) && !isNaN(row) && !isNaN(count) && count > 0) {
+        const endColA = colA + count - 1;
+        const endRow = row + count - 1;
+        
+        rangeInput.value = `${colA}-${endColA}`;
+        linkInput.value = `https://docs.google.com/spreadsheets/d/1bFSJArcYUHmUlm8sZbazfVp3CNaFTu7OMsYmruXnE5E/edit?gid=157147023#gid=157147023&range=${row}:${endRow}`;
+        
+        copyRangeBtn.disabled = false;
+        copyLinkBtn.disabled = false;
+      } else {
+        rangeInput.value = "";
+        linkInput.value = "";
+        copyRangeBtn.disabled = true;
+        copyLinkBtn.disabled = true;
+      }
+    };
+
+    document.getElementById('quickColA').addEventListener('input', updateQuickTemplate);
+    document.getElementById('quickRow').addEventListener('input', updateQuickTemplate);
+    document.getElementById('quickCount').addEventListener('input', updateQuickTemplate);
+
+    document.getElementById('quickCopyRangeBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(document.getElementById('quickTemplateRange').value).then(() => {
+        const btn = document.getElementById('quickCopyRangeBtn');
+        btn.textContent = '✓ ｺﾋﾟｰ済';
+        btn.style.backgroundColor = '#138496';
+        setTimeout(() => {
+          btn.textContent = 'コピー';
+          btn.style.backgroundColor = '#17a2b8';
+        }, 2000);
+      });
+    });
+
+    document.getElementById('quickCopyLinkBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(document.getElementById('quickTemplateLink').value).then(() => {
+        const btn = document.getElementById('quickCopyLinkBtn');
+        btn.textContent = '✓ ｺﾋﾟｰ済';
+        btn.style.backgroundColor = '#138496';
+        setTimeout(() => {
+          btn.textContent = 'コピー';
+          btn.style.backgroundColor = '#17a2b8';
+        }, 2000);
+      });
+    });
+
 
     // --- データ管理 ---
     let accumulatedItems = [];
@@ -1082,7 +1186,6 @@
       const txIdVal = document.getElementById('txId').value.trim();
       const txParts = txIdVal.split('-');
       
-      // ★ 変更点：3ブロックか4ブロックかで「真ん中の数字」の場所を変える
       let middlePart = "";
       if (txParts.length === 3) {
         middlePart = txParts[1];
@@ -1189,7 +1292,7 @@
       switchStep('step9', 'stepNote');
     });
 
-    // --- 全リセット処理 (バックアップ作成) ---
+    // --- 全リセット処理 ---
     document.getElementById('resetBtn').addEventListener('click', () => {
       const isConfirmed = confirm("本当にすべて消して最初に戻って良いですか？\n※バックアップには保存されます。");
       if (!isConfirmed) {
