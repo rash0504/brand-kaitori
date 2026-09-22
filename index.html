@@ -193,7 +193,13 @@
         <button id="next1" class="btn-primary" disabled>次へ</button>
       </div>
 
-      <!-- ★追加：気楽に使えるリンク生成ツール -->
+      <!-- 復元ボタンリスト（複数表示用） -->
+      <div id="restoreGroup" style="display: none; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #ccc;">
+        <label style="color: #17a2b8; margin-bottom: 10px;">🔄 自動保存データ (6時間以内)</label>
+        <div id="restoreList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+      </div>
+
+      <!-- 気楽に使えるリンク生成ツール（自動保存データの下に配置） -->
       <div style="margin-top: 30px; background: #eef5ff; padding: 15px; border-radius: 6px; border: 1px solid #b8daff;">
         <label style="font-weight: bold; color: #004085; display: block; margin-bottom: 10px;">🔗 スプレッドシート リンク生成ツール</label>
         <div class="hint-text" style="margin-bottom: 15px;">※入力フローとは関係なく、いつでも計算してコピーできます。</div>
@@ -230,11 +236,6 @@
         </div>
       </div>
       
-      <!-- 復元ボタンリスト（複数表示用） -->
-      <div id="restoreGroup" style="display: none; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #ccc;">
-        <label style="color: #17a2b8; margin-bottom: 10px;">🔄 自動保存データ (6時間以内)</label>
-        <div id="restoreList" style="display: flex; flex-direction: column; gap: 10px;"></div>
-      </div>
     </div>
 
     <!-- Step Tx: 取引ID・件数入力 -->
@@ -1292,7 +1293,7 @@
       switchStep('step9', 'stepNote');
     });
 
-    // --- 全リセット処理 ---
+    // --- 全リセット処理 (バックアップ作成) ---
     document.getElementById('resetBtn').addEventListener('click', () => {
       const isConfirmed = confirm("本当にすべて消して最初に戻って良いですか？\n※バックアップには保存されます。");
       if (!isConfirmed) {
