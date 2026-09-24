@@ -1164,7 +1164,10 @@
         document.getElementById('continueBtnGroup').style.display = 'none';
       }
 
-      if (!isSingleMode && globalColANum && globalRowNum && currentFullTxId.endsWith('-1')) {
+      // ★ここが変更箇所です★
+      // currentFullTxId.endsWith('-1') という条件を外し、
+      // 最初に取得した globalColANum と globalRowNum があれば表示するようにしました
+      if (!isSingleMode && globalColANum && globalRowNum) {
         const colA = parseInt(globalColANum, 10);
         const row = parseInt(globalRowNum, 10);
         
