@@ -254,7 +254,7 @@
         <div class="hint-text">※履歴の目印として使用されます</div>
       </div>
 
-      <!-- 末尾が "-1" の時だけ表示される追加入力項目 -->
+      <!-- 末尾に関わらず表示される追加入力項目 -->
       <div id="extraFields" style="display: none; background: #eef5ff; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
         <div class="form-group" style="margin-bottom: 15px;">
           <label for="colANum">A列の数字 (必須)</label>
@@ -656,7 +656,9 @@
             const isSingle = singleInputStaff.includes(b.staff);
 
             document.getElementById('txId').value = b.fullTxId || "";
-            if (b.fullTxId.endsWith('-1') && !isSingle) {
+            
+            // ★末尾に関係なく、非SingleModeなら値を復元する
+            if (!isSingle) {
               document.getElementById('colANum').value = globalColANum;
               document.getElementById('rowNum').value = globalRowNum;
             } else {
@@ -827,10 +829,30 @@
       const isSingleMode = singleInputStaff.includes(staffName);
 
       let isExtraValid = true;
-      if (val.endsWith('-1') && !isSingleMode) {
+      
+      // ★末尾に関係なく、非SingleModeなら常にA列と行数を表示する
+      if (!isSingleMode) {
         document.getElementById('extraFields').style.display = 'block';
-        const cA = document.getElementById('colANum').value.trim();
-        const rN = document.getElementById('rowNum').value.trim();
+
+        // 取引IDのミドルパート（ランダム数字）を抽出
+        let middlePart = "";
+        if (isValidId) {
+          const parts = val.split('-');
+          if (parts.length === 3) middlePart = parts[1];
+          else if (parts.length === 4) middlePart = parts[2];
+        }
+
+        const colInput = document.getElementById('colANum');
+        const rowInput = document.getElementById('rowNum');
+
+        // ミドルパートが前回の案件と同じなら、保存されているA列と行数を自動で入力欄にセットする
+        if (middlePart !== "" && middlePart === currentTxMiddle) {
+          if (colInput.value === "" && globalColANum !== "") colInput.value = globalColANum;
+          if (rowInput.value === "" && globalRowNum !== "") rowInput.value = globalRowNum;
+        }
+
+        const cA = colInput.value.trim();
+        const rN = rowInput.value.trim();
         isExtraValid = (cA !== "" && rN !== "");
       } else {
         document.getElementById('extraFields').style.display = 'none';
@@ -1164,9 +1186,7 @@
         document.getElementById('continueBtnGroup').style.display = 'none';
       }
 
-      // ★ここが変更箇所です★
-      // currentFullTxId.endsWith('-1') という条件を外し、
-      // 最初に取得した globalColANum と globalRowNum があれば表示するようにしました
+      // ★末尾に関係なく、A列と行数が保持されていればリンクエリアを表示する
       if (!isSingleMode && globalColANum && globalRowNum) {
         const colA = parseInt(globalColANum, 10);
         const row = parseInt(globalRowNum, 10);
@@ -1217,7 +1237,8 @@
       const staffName = document.getElementById('staff').value.trim();
       const isSingleMode = singleInputStaff.includes(staffName);
 
-      if (txIdVal.endsWith('-1') && !isSingleMode) {
+      // ★末尾に関係なく、入力されたA列と行数を保存する
+      if (!isSingleMode) {
         globalColANum = document.getElementById('colANum').value.trim();
         globalRowNum = document.getElementById('rowNum').value.trim();
       }
@@ -1260,6 +1281,11 @@
     document.getElementById('continueBtn').addEventListener('click', () => {
       document.getElementById('txId').value = "";
       
+      // 次の商品を入力する際は、A列・行数のフィールドを一旦クリアしておく
+      // （取引IDを入力した際に、同じミドルパートなら自動で値が復元されます）
+      document.getElementById('colANum').value = "";
+      document.getElementById('rowNum').value = "";
+
       document.getElementById('modelNumber').value = "";
       document.getElementById('itemId').value = "";
       document.getElementById('itemPage').value = "";
@@ -1283,6 +1309,7 @@
       document.getElementById('next6').disabled = true;
       document.getElementById('next7').disabled = true;
 
+      // extraFieldsは取引IDが入力されるまで隠しておく
       document.getElementById('extraFields').style.display = 'none';
 
       switchStep('step9', 'stepTx');
