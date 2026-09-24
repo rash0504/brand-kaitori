@@ -254,7 +254,7 @@
         <div class="hint-text">※履歴の目印として使用されます</div>
       </div>
 
-      <!-- 末尾に関わらず表示される追加入力項目 -->
+      <!-- 末尾が "-1" の時だけ表示される追加入力項目 -->
       <div id="extraFields" style="display: none; background: #eef5ff; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
         <div class="form-group" style="margin-bottom: 15px;">
           <label for="colANum">A列の数字 (必須)</label>
@@ -657,8 +657,8 @@
 
             document.getElementById('txId').value = b.fullTxId || "";
             
-            // ★末尾に関係なく、非SingleModeなら値を復元する
-            if (!isSingle) {
+            // ★末尾が-1の時だけ復元する
+            if (b.fullTxId.endsWith('-1') && !isSingle) {
               document.getElementById('colANum').value = globalColANum;
               document.getElementById('rowNum').value = globalRowNum;
             } else {
@@ -830,8 +830,8 @@
 
       let isExtraValid = true;
       
-      // ★末尾に関係なく、非SingleModeなら常にA列と行数を表示する
-      if (!isSingleMode) {
+      // ★末尾が-1の時だけ、A列と行数の入力欄を表示する
+      if (val.endsWith('-1') && !isSingleMode) {
         document.getElementById('extraFields').style.display = 'block';
 
         // 取引IDのミドルパート（ランダム数字）を抽出
@@ -1237,8 +1237,8 @@
       const staffName = document.getElementById('staff').value.trim();
       const isSingleMode = singleInputStaff.includes(staffName);
 
-      // ★末尾に関係なく、入力されたA列と行数を保存する
-      if (!isSingleMode) {
+      // ★末尾が-1の時だけ、入力されたA列と行数を保存する
+      if (txIdVal.endsWith('-1') && !isSingleMode) {
         globalColANum = document.getElementById('colANum').value.trim();
         globalRowNum = document.getElementById('rowNum').value.trim();
       }
