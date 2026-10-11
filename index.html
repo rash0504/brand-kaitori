@@ -193,8 +193,9 @@
           <option value="米山 潮太郎"></option>
           <option value="渡瀬 可威"></option>
           <option value="情報入力者"></option>
+          <option value="snkr情報入力"></option>
         </datalist>
-        <div class="hint-text">※「情報入力者」を選択（入力）した場合、Y列（担当者欄）には何も反映されません</div>
+        <div class="hint-text">※「情報入力者」または「snkr情報入力」を選択した場合、Y列（担当者欄）には何も反映されません</div>
       </div>
       <div class="btn-group">
         <button id="next1" class="btn-primary" disabled>次へ</button>
@@ -206,7 +207,7 @@
         <div id="restoreList" style="display: flex; flex-direction: column; gap: 10px;"></div>
       </div>
 
-      <!-- 気楽に使えるリンク生成ツール（自動保存データの下に配置） -->
+      <!-- 気楽に使えるリンク生成ツール -->
       <div style="margin-top: 30px; background: #eef5ff; padding: 15px; border-radius: 6px; border: 1px solid #b8daff;">
         <label style="font-weight: bold; color: #004085; display: block; margin-bottom: 10px;">🔗 スプレッドシート リンク生成ツール</label>
         <div class="hint-text" style="margin-bottom: 15px;">※入力フローとは関係がありません。いつでもslack共有用のリンクを作成が出来ます。</div>
@@ -392,7 +393,7 @@
           <option value="傷や汚れあり">傷や汚れあり</option>
           <option value="全体的に状態が悪い">全体的に状態が悪い</option>
         </select>
-        <div class="hint-text">※担当者が「情報入力者」の場合は入力任意です。</div>
+        <div class="hint-text">※担当者が「情報入力者」または「snkr情報入力」の場合は入力任意です。</div>
       </div>
       <div class="btn-group">
         <button id="back6" class="btn-secondary">戻る</button>
@@ -435,8 +436,9 @@
           <div class="form-group">
             <label>作成データ</label>
             <textarea id="resultData" rows="6" readonly></textarea>
+            <!-- ★案内テキストをK列からJ列に変更 -->
             <div class="hint-text" style="color: #28a745; font-weight: bold; margin-top: 10px;">
-              スプレッドシートの <b>K列（先頭行）</b> を選択して貼り付けしてください。
+              スプレッドシートの <b>J列（先頭行）</b> を選択して貼り付けしてください。
             </div>
           </div>
           <div class="btn-group" style="margin-top: 10px;">
@@ -657,7 +659,6 @@
 
             document.getElementById('txId').value = b.fullTxId || "";
             
-            // ★末尾が-1の時だけ復元する
             if (b.fullTxId.endsWith('-1') && !isSingle) {
               document.getElementById('colANum').value = globalColANum;
               document.getElementById('rowNum').value = globalRowNum;
@@ -834,7 +835,6 @@
       if (val.endsWith('-1') && !isSingleMode) {
         document.getElementById('extraFields').style.display = 'block';
 
-        // 取引IDのミドルパート（ランダム数字）を抽出
         let middlePart = "";
         if (isValidId) {
           const parts = val.split('-');
@@ -845,7 +845,6 @@
         const colInput = document.getElementById('colANum');
         const rowInput = document.getElementById('rowNum');
 
-        // ミドルパートが前回の案件と同じなら、保存されているA列と行数を自動で入力欄にセットする
         if (middlePart !== "" && middlePart === currentTxMiddle) {
           if (colInput.value === "" && globalColANum !== "") colInput.value = globalColANum;
           if (rowInput.value === "" && globalRowNum !== "") rowInput.value = globalRowNum;
@@ -1115,7 +1114,7 @@
     
     const validateCondition = () => {
       const staff = document.getElementById('staff').value.trim();
-      if (staff === "情報入力者") {
+      if (staff === "情報入力者" || staff === "snkr情報入力") {
         next7Btn.disabled = false;
       } else {
         next7Btn.disabled = itemConditionSelect.value === "";
@@ -1164,8 +1163,9 @@
           if (foundItems.length > 0) {
             foundItems.forEach(item => tsvLines.push(item.tsvData.join('\t')));
           } else {
-            const emptyRow = new Array(15).fill("");
-            emptyRow[0] = "査定待ち"; 
+            // ★配列の長さを16に変更し、インデックス1（K列）を査定待ちにする
+            const emptyRow = new Array(16).fill("");
+            emptyRow[1] = "査定待ち"; 
             tsvLines.push(emptyRow.join('\t'));
           }
         }
@@ -1186,7 +1186,6 @@
         document.getElementById('continueBtnGroup').style.display = 'none';
       }
 
-      // ★末尾に関係なく、A列と行数が保持されていればリンクエリアを表示する
       if (!isSingleMode && globalColANum && globalRowNum) {
         const colA = parseInt(globalColANum, 10);
         const row = parseInt(globalRowNum, 10);
@@ -1237,7 +1236,6 @@
       const staffName = document.getElementById('staff').value.trim();
       const isSingleMode = singleInputStaff.includes(staffName);
 
-      // ★末尾が-1の時だけ、入力されたA列と行数を保存する
       if (txIdVal.endsWith('-1') && !isSingleMode) {
         globalColANum = document.getElementById('colANum').value.trim();
         globalRowNum = document.getElementById('rowNum').value.trim();
@@ -1253,8 +1251,14 @@
       const itemAccessories = document.getElementById('itemAccessories').value;
       const itemNote = document.getElementById('itemNote').value;
       
-      const staffVal = (staffName === "情報入力者") ? "" : staffName;
-      const kStatus = (staffName === "情報入力者") ? "査定待ち" : "検品Wチェック済";
+      // ★ステータスなどの設定
+      const isSnkr = (staffName === "snkr情報入力");
+      const isInputter = (staffName === "情報入力者" || isSnkr);
+      const staffVal = isInputter ? "" : staffName;
+      const kStatus = isInputter ? "査定待ち" : "検品Wチェック済";
+
+      // ★ここを追加：snkr情報入力の場合はJ列（配列の先頭）に取引IDを入れる
+      const jStatus = isSnkr ? txIdVal : "";
 
       const resolvedItemPage = getResolvedItemPage();
       let adminUrl = "";
@@ -1262,8 +1266,9 @@
         adminUrl = `https://admin.snkrdunk.com/admin/apparel/${itemId}/edit/`;
       }
 
+      // ★データ配列の先頭を jStatus に変更。全16項目（J列〜Y列）になります。
       const dataArray = [
-        kStatus, "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, itemNote, staffVal
+        jStatus, kStatus, "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, itemNote, staffVal
       ];
 
       if (isSingleMode) {
@@ -1280,9 +1285,6 @@
     // --- 次の商品を追加 ---
     document.getElementById('continueBtn').addEventListener('click', () => {
       document.getElementById('txId').value = "";
-      
-      // 次の商品を入力する際は、A列・行数のフィールドを一旦クリアしておく
-      // （取引IDを入力した際に、同じミドルパートなら自動で値が復元されます）
       document.getElementById('colANum').value = "";
       document.getElementById('rowNum').value = "";
 
@@ -1309,7 +1311,6 @@
       document.getElementById('next6').disabled = true;
       document.getElementById('next7').disabled = true;
 
-      // extraFieldsは取引IDが入力されるまで隠しておく
       document.getElementById('extraFields').style.display = 'none';
 
       switchStep('step9', 'stepTx');
@@ -1386,7 +1387,7 @@
         copyBtn.textContent = '✓ コピー済';
         copyBtn.style.backgroundColor = '#1e7e34';
         setTimeout(() => {
-          copyBtn.textContent = '蓄積データを一括コピー';
+          copyBtn.textContent = 'データをコピー';
           copyBtn.style.backgroundColor = '#28a745';
         }, 2000);
       }).catch(() => alert('コピーに失敗しました。'));
