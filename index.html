@@ -1152,7 +1152,6 @@
         maxSuffix = accumulatedItems.length > 0 ? accumulatedItems[0].suffix : 1;
       }
 
-      // 担当者が「snkr情報入力」の場合は全16列(J列スタート)、それ以外は全15列(K列スタート)にする
       const colsCount = isSnkr ? 16 : 15;
       const tsvLines = [];
 
@@ -1169,9 +1168,33 @@
             const emptyRow = new Array(colsCount).fill("");
             
             if (isSnkr) {
-              // ★snkr情報入力の場合 (J列: 空白のまま、K列: 査定待ち)
-              // 自動連番による取引IDの生成をオフにしました。
-              emptyRow[0] = ""; 
+              // ★snkr情報入力の場合 (J列: 取引IDを自動計算、K列: 査定待ち)
+              let generatedId = "";
+              if (accumulatedItems.length > 0) {
+                // 1件目に入力された取引IDを基準にする
+                const firstId = accumulatedItems[0].tsvData[0];
+                const parts = firstId.split('-');
+                
+                if (parts.length >= 3) {
+                  const suffixNum = parseInt(parts[parts.length - 1], 10);
+                  const secondPartNum = parseInt(parts[1], 10);
+                  
+                  if (!isNaN(suffixNum) && !isNaN(secondPartNum)) {
+                    // 「2つ目の数字 - 末尾の数字 = 基準値」として、現在の行(i)に合わせて計算
+                    const base = secondPartNum - suffixNum;
+                    parts[1] = base + i;
+                    parts[parts.length - 1] = i;
+                    generatedId = parts.join('-');
+                  } else {
+                    parts[parts.length - 1] = i;
+                    generatedId = parts.join('-');
+                  }
+                } else {
+                  generatedId = firstId;
+                }
+              }
+              
+              emptyRow[0] = generatedId; 
               emptyRow[1] = "査定待ち"; 
             } else {
               // それ以外の担当者の場合 (K列: 査定待ち) ※J列には何も出力しない
@@ -1198,7 +1221,6 @@
         document.getElementById('continueBtnGroup').style.display = 'none';
       }
 
-      // 貼り付け先の案内文を動的に切り替える
       const pasteTargetHint = document.getElementById('pasteTargetHint');
       if (isSnkr) {
         pasteTargetHint.innerHTML = 'スプレッドシートの <b style="font-size:1.1em;">J列（先頭行）</b> を選択して貼り付けしてください。';
