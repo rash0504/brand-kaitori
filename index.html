@@ -436,9 +436,9 @@
           <div class="form-group">
             <label>作成データ</label>
             <textarea id="resultData" rows="6" readonly></textarea>
-            <!-- ★案内テキストをK列からJ列に変更 -->
-            <div class="hint-text" style="color: #28a745; font-weight: bold; margin-top: 10px;">
-              スプレッドシートの <b>J列（先頭行）</b> を選択して貼り付けしてください。
+            <!-- ★担当者によってここの案内文が自動で変化します -->
+            <div id="pasteTargetHint" class="hint-text" style="color: #28a745; font-weight: bold; margin-top: 10px;">
+              スプレッドシートの <b>K列（先頭行）</b> を選択して貼り付けしてください。
             </div>
           </div>
           <div class="btn-group" style="margin-top: 10px;">
@@ -831,7 +831,6 @@
 
       let isExtraValid = true;
       
-      // ★末尾が-1の時だけ、A列と行数の入力欄を表示する
       if (val.endsWith('-1') && !isSingleMode) {
         document.getElementById('extraFields').style.display = 'block';
 
@@ -1138,6 +1137,7 @@
     const updateResultScreen = () => {
       const staffName = document.getElementById('staff').value.trim();
       const isSingleMode = singleInputStaff.includes(staffName);
+      const isSnkr = (staffName === "snkr情報入力");
       
       const expectedCount = isSingleMode ? 1 : (parseInt(document.getElementById('txCount').value, 10) || 1);
 
@@ -1152,7 +1152,10 @@
         maxSuffix = accumulatedItems.length > 0 ? accumulatedItems[0].suffix : 1;
       }
 
+      // ★担当者が「snkr情報入力」の場合は全16列(J列スタート)、それ以外は全15列(K列スタート)にする
+      const colsCount = isSnkr ? 16 : 15;
       const tsvLines = [];
+
       if (isSingleMode) {
         if (accumulatedItems.length > 0) {
           tsvLines.push(accumulatedItems[0].tsvData.join('\t'));
@@ -1163,9 +1166,25 @@
           if (foundItems.length > 0) {
             foundItems.forEach(item => tsvLines.push(item.tsvData.join('\t')));
           } else {
-            // ★配列の長さを16に変更し、インデックス1（K列）を査定待ちにする
-            const emptyRow = new Array(16).fill("");
-            emptyRow[1] = "査定待ち"; 
+            const emptyRow = new Array(colsCount).fill("");
+            
+            if (isSnkr) {
+              // snkr情報入力の場合 (J列: 取引ID、K列: 査定待ち)
+              emptyRow[1] = "査定待ち"; 
+              if (currentFullTxId) {
+                let parts = currentFullTxId.split('-');
+                if (parts.length >= 3) {
+                  parts[parts.length - 1] = i; // 末尾を連番にする
+                  emptyRow[0] = parts.join('-');
+                } else {
+                  emptyRow[0] = currentFullTxId;
+                }
+              }
+            } else {
+              // それ以外の担当者の場合 (K列: 査定待ち) ※J列には何も出力しない
+              emptyRow[0] = "査定待ち";
+            }
+
             tsvLines.push(emptyRow.join('\t'));
           }
         }
@@ -1184,6 +1203,14 @@
         document.getElementById('continueBtn').textContent = isSingleMode ? "次の商品を入力" : "次の商品を続けて入力";
       } else {
         document.getElementById('continueBtnGroup').style.display = 'none';
+      }
+
+      // ★貼り付け先の案内文を動的に切り替える
+      const pasteTargetHint = document.getElementById('pasteTargetHint');
+      if (isSnkr) {
+        pasteTargetHint.innerHTML = 'スプレッドシートの <b style="font-size:1.1em;">J列（先頭行）</b> を選択して貼り付けしてください。';
+      } else {
+        pasteTargetHint.innerHTML = 'スプレッドシートの <b style="font-size:1.1em;">K列（先頭行）</b> を選択して貼り付けしてください。';
       }
 
       if (!isSingleMode && globalColANum && globalRowNum) {
@@ -1251,14 +1278,10 @@
       const itemAccessories = document.getElementById('itemAccessories').value;
       const itemNote = document.getElementById('itemNote').value;
       
-      // ★ステータスなどの設定
       const isSnkr = (staffName === "snkr情報入力");
       const isInputter = (staffName === "情報入力者" || isSnkr);
       const staffVal = isInputter ? "" : staffName;
       const kStatus = isInputter ? "査定待ち" : "検品Wチェック済";
-
-      // ★ここを追加：snkr情報入力の場合はJ列（配列の先頭）に取引IDを入れる
-      const jStatus = isSnkr ? txIdVal : "";
 
       const resolvedItemPage = getResolvedItemPage();
       let adminUrl = "";
@@ -1266,10 +1289,18 @@
         adminUrl = `https://admin.snkrdunk.com/admin/apparel/${itemId}/edit/`;
       }
 
-      // ★データ配列の先頭を jStatus に変更。全16項目（J列〜Y列）になります。
-      const dataArray = [
-        jStatus, kStatus, "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, itemNote, staffVal
-      ];
+      let dataArray = [];
+      if (isSnkr) {
+        // ★snkr情報入力の場合：J列スタート（全16列）
+        dataArray = [
+          txIdVal, kStatus, "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, itemNote, staffVal
+        ];
+      } else {
+        // ★それ以外の場合：K列スタート（全15列）
+        dataArray = [
+          kStatus, "", itemName, itemId, modelNumber, itemCategory, brand, resolvedItemPage, adminUrl, "", itemSize, itemCondition, itemAccessories, itemNote, staffVal
+        ];
+      }
 
       if (isSingleMode) {
         accumulatedItems = [{ suffix: suffixNum, tsvData: dataArray }];
